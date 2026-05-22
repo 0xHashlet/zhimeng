@@ -232,7 +232,7 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     marginTop: 8,
-    color: colors.textMuted,
+    color: colors.textSecondary,
     fontSize: 14,
     lineHeight: 21
   },
@@ -242,7 +242,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: colors.surface,
+    backgroundColor: colors.card,
     borderWidth: 1,
     borderColor: colors.border
   },
@@ -254,13 +254,13 @@ const styles = StyleSheet.create({
     flex: 1,
     minHeight: 116,
     padding: 12,
-    borderRadius: 12,
-    backgroundColor: colors.surface,
+    borderRadius: 22,
+    backgroundColor: colors.card,
     borderWidth: 1,
     borderColor: colors.border,
-    shadowColor: "#111827",
-    shadowOpacity: 0.06,
-    shadowRadius: 10,
+    shadowColor: colors.textPrimary,
+    shadowOpacity: 0.04,
+    shadowRadius: 12,
     shadowOffset: {
       width: 0,
       height: 4
@@ -301,14 +301,14 @@ const styles = StyleSheet.create({
   bar: {
     flex: 1,
     borderRadius: 3,
-    backgroundColor: "#93C5FD"
+    backgroundColor: colors.primaryLight
   },
   suggestionCard: {
     flexDirection: "row",
     gap: 12,
     padding: 16,
-    borderRadius: 14,
-    backgroundColor: colors.surface,
+    borderRadius: 24,
+    backgroundColor: colors.card,
     borderWidth: 1,
     borderColor: colors.border
   },
@@ -318,7 +318,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: "#EFF6FF"
+    backgroundColor: colors.cardSoft
   },
   suggestionBody: {
     flex: 1
@@ -330,14 +330,14 @@ const styles = StyleSheet.create({
   },
   cardDescription: {
     marginTop: 8,
-    color: colors.textMuted,
+    color: colors.textSecondary,
     fontSize: 14,
     lineHeight: 22
   },
   actionList: {
     overflow: "hidden",
-    borderRadius: 14,
-    backgroundColor: colors.surface,
+    borderRadius: 22,
+    backgroundColor: colors.card,
     borderWidth: 1,
     borderColor: colors.border
   },
@@ -368,13 +368,13 @@ const styles = StyleSheet.create({
   },
   actionDescription: {
     marginTop: 4,
-    color: colors.textMuted,
+    color: colors.textSecondary,
     fontSize: 13
   },
   recentCard: {
     padding: 16,
-    borderRadius: 14,
-    backgroundColor: colors.surface,
+    borderRadius: 24,
+    backgroundColor: colors.card,
     borderWidth: 1,
     borderColor: colors.border
   },
@@ -389,13 +389,13 @@ const styles = StyleSheet.create({
     fontWeight: "700"
   },
   sectionLink: {
-    color: colors.textMuted,
+    color: colors.textSecondary,
     fontSize: 13,
     fontWeight: "600"
   },
   recentDate: {
     marginTop: 14,
-    color: colors.textMuted,
+    color: colors.textSecondary,
     fontSize: 13,
     lineHeight: 20
   },
@@ -426,7 +426,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 999,
-    backgroundColor: "#EFF6FF"
+    backgroundColor: colors.cyanSoft
   },
   weakTagText: {
     color: colors.primary,

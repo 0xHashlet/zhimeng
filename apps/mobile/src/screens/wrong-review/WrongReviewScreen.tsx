@@ -192,8 +192,8 @@ const styles = StyleSheet.create({
   tabs: {
     flexDirection: "row",
     padding: 4,
-    borderRadius: 12,
-    backgroundColor: "#F1F5F9"
+    borderRadius: 16,
+    backgroundColor: colors.cardSoft
   },
   tabItem: {
     flex: 1,
@@ -203,12 +203,12 @@ const styles = StyleSheet.create({
     borderRadius: 9
   },
   tabActive: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.card,
     borderWidth: 1,
-    borderColor: "#93C5FD"
+    borderColor: colors.primary
   },
   tabText: {
-    color: colors.textMuted,
+    color: colors.textSecondary,
     fontSize: 14,
     fontWeight: "700"
   },
@@ -216,14 +216,14 @@ const styles = StyleSheet.create({
     color: colors.primary
   },
   countText: {
-    color: colors.textMuted,
+    color: colors.textSecondary,
     fontSize: 13,
     fontWeight: "600"
   },
   questionCard: {
     padding: 16,
-    borderRadius: 14,
-    backgroundColor: colors.surface,
+    borderRadius: 24,
+    backgroundColor: colors.card,
     borderWidth: 1,
     borderColor: colors.border
   },
@@ -236,8 +236,8 @@ const styles = StyleSheet.create({
   tag: {
     paddingHorizontal: 10,
     paddingVertical: 6,
-    borderRadius: 8,
-    backgroundColor: "#DBEAFE"
+    borderRadius: 10,
+    backgroundColor: colors.cyanSoft
   },
   tagText: {
     color: colors.primary,
@@ -245,7 +245,7 @@ const styles = StyleSheet.create({
     fontWeight: "800"
   },
   questionIndex: {
-    color: colors.textMuted,
+    color: colors.textSecondary,
     fontSize: 13,
     fontWeight: "600"
   },
@@ -271,7 +271,7 @@ const styles = StyleSheet.create({
     color: colors.primary
   },
   infoDanger: {
-    color: "#EF4444"
+    color: colors.error
   },
   questionActions: {
     marginTop: 16,
@@ -283,8 +283,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     minHeight: 46,
-    borderRadius: 10,
-    backgroundColor: colors.surface,
+    borderRadius: 16,
+    backgroundColor: colors.card,
     borderWidth: 1,
     borderColor: colors.border
   },
@@ -300,18 +300,18 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 6,
     minHeight: 46,
-    borderRadius: 10,
+    borderRadius: 16,
     backgroundColor: colors.primary
   },
   primaryButtonText: {
-    color: colors.surface,
+    color: colors.card,
     fontSize: 14,
     fontWeight: "800"
   },
   aiCard: {
     padding: 16,
-    borderRadius: 14,
-    backgroundColor: colors.surface,
+    borderRadius: 24,
+    backgroundColor: colors.card,
     borderWidth: 1,
     borderColor: colors.border
   },
@@ -326,7 +326,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: "#EFF6FF"
+    backgroundColor: colors.cardSoft
   },
   aiTitle: {
     color: colors.text,
@@ -365,7 +365,7 @@ const styles = StyleSheet.create({
     width: 34,
     height: 34,
     borderRadius: 17,
-    backgroundColor: "#F8FAFC"
+    backgroundColor: colors.cardSoft
   },
   pagerText: {
     color: colors.text,

@@ -185,7 +185,7 @@ const styles = StyleSheet.create({
   },
   reportTime: {
     marginTop: 6,
-    color: colors.textMuted,
+    color: colors.textSecondary,
     fontSize: 12
   },
   content: {
@@ -202,14 +202,14 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
     minHeight: 102,
     padding: 12,
-    borderRadius: 12,
-    backgroundColor: colors.surface,
+    borderRadius: 22,
+    backgroundColor: colors.card,
     borderWidth: 1,
     borderColor: colors.border
   },
   summaryTitle: {
     marginTop: 8,
-    color: colors.textMuted,
+    color: colors.textSecondary,
     fontSize: 12,
     fontWeight: "600"
   },
@@ -221,8 +221,8 @@ const styles = StyleSheet.create({
   },
   card: {
     padding: 16,
-    borderRadius: 14,
-    backgroundColor: colors.surface,
+    borderRadius: 24,
+    backgroundColor: colors.card,
     borderWidth: 1,
     borderColor: colors.border
   },
@@ -253,10 +253,10 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: "#DBEAFE"
+    backgroundColor: colors.cyanSoft
   },
   rankText: {
-    color: colors.primary,
+    color: colors.warning,
     fontSize: 13,
     fontWeight: "800"
   },
@@ -280,7 +280,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     width: 36,
     height: 36,
-    borderRadius: 10,
+    borderRadius: 12,
     backgroundColor: colors.primary
   },
   trainingText: {
@@ -293,7 +293,7 @@ const styles = StyleSheet.create({
   },
   trainingDescription: {
     marginTop: 4,
-    color: colors.textMuted,
+    color: colors.textSecondary,
     fontSize: 13,
     lineHeight: 19
   },
@@ -308,11 +308,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     minHeight: 54,
-    borderRadius: 12,
+    borderRadius: 16,
     backgroundColor: colors.primary
   },
   primaryButtonText: {
-    color: colors.surface,
+    color: colors.card,
     fontSize: 16,
     fontWeight: "800"
   },
@@ -320,8 +320,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     minHeight: 46,
-    borderRadius: 10,
-    backgroundColor: colors.surface,
+    borderRadius: 16,
+    backgroundColor: colors.card,
     borderWidth: 1,
     borderColor: colors.border
   },

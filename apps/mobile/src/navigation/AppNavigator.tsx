@@ -36,7 +36,7 @@ export function AppNavigator() {
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textMuted,
         tabBarStyle: {
-          backgroundColor: colors.surface,
+          backgroundColor: colors.card,
           borderTopColor: colors.border,
           height: 62 + bottomInset,
           paddingBottom: bottomInset,

@@ -71,7 +71,7 @@ const styles = StyleSheet.create({
   },
   description: {
     marginTop: 10,
-    color: colors.textMuted,
+    color: colors.textSecondary,
     fontSize: 14,
     lineHeight: 22,
     textAlign: "center"
@@ -81,13 +81,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingTop: 28,
     paddingBottom: 24,
-    borderRadius: 18,
-    backgroundColor: colors.surface,
+    borderRadius: 28,
+    backgroundColor: colors.card,
     borderWidth: 1,
     borderColor: colors.border,
-    shadowColor: "#111827",
-    shadowOpacity: 0.06,
-    shadowRadius: 14,
+    shadowColor: colors.textPrimary,
+    shadowOpacity: 0.04,
+    shadowRadius: 16,
     shadowOffset: {
       width: 0,
       height: 6
@@ -105,7 +105,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     width: 24,
     height: 24,
-    borderRadius: 12,
+    borderRadius: 16,
     backgroundColor: colors.primary
   },
   checkText: {
@@ -136,7 +136,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary
   },
   primaryButtonText: {
-    color: colors.surface,
+    color: colors.card,
     fontSize: 18,
     fontWeight: "700"
   }

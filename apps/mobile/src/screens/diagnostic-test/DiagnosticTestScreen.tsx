@@ -145,7 +145,7 @@ export function DiagnosticTestScreen() {
                       {selected ? (
                         <View style={styles.selectedIcon}>
                           <Check
-                            color={colors.surface}
+                            color={colors.card}
                             size={15}
                             strokeWidth={3}
                           />
@@ -191,7 +191,7 @@ const styles = StyleSheet.create({
   },
   progressTrack: {
     height: 3,
-    backgroundColor: "#E5E7EB"
+    backgroundColor: colors.border
   },
   progressFill: {
     width: "30%",
@@ -217,7 +217,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     marginTop: 16,
     borderRadius: 999,
-    backgroundColor: "#EFF6FF"
+    backgroundColor: colors.cardSoft
   },
   typeText: {
     color: colors.primary,
@@ -227,8 +227,8 @@ const styles = StyleSheet.create({
   materialCard: {
     gap: 8,
     padding: 16,
-    borderRadius: 14,
-    backgroundColor: colors.surface,
+    borderRadius: 22,
+    backgroundColor: colors.card,
     borderWidth: 1,
     borderColor: colors.border
   },
@@ -255,14 +255,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 16,
     paddingHorizontal: 16,
-    borderRadius: 12,
-    backgroundColor: colors.surface,
+    borderRadius: 18,
+    backgroundColor: colors.card,
     borderWidth: 1,
     borderColor: colors.border
   },
   optionSelected: {
     borderColor: colors.primary,
-    backgroundColor: "#F8FBFF"
+    backgroundColor: colors.cyanSoft
   },
   optionKey: {
     color: colors.text,
