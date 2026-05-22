@@ -2,28 +2,28 @@
 
 ## 设计定位
 
-Glacier Cyan 是智梦考公助手移动端的默认视觉色系。整体风格应保持 iOS 感、高级简约、清爽理性，适合 AI 学习产品和资料分析提速诊断场景。
+Glacier Cyan 是织梦考公助手移动端的默认视觉色系。整体风格应保持 iOS 感、高级简约、清爽理性，适合 AI 学习产品和资料分析提速诊断场景。
 
 界面应以白底、浅青蓝背景、卡片化、轻阴影和中大圆角为主，避免大面积高饱和色、厚重阴影和装饰性渐变。
 
 ## 色彩 Token
 
-| Token | 颜色 | 用途 |
-| --- | --- | --- |
-| `primary` | `#32B2CB` | 主按钮、选中态、进度、关键图标 |
-| `primaryDark` | `#1F9DB7` | 主色按压态、强调文字 |
-| `primaryLight` | `#8EDBE6` | 轻量数据图、弱强调背景元素 |
-| `cyanSoft` | `#DDF5F8` | 选中项背景、弱提示标签 |
-| `background` | `#F7FBFD` | 页面背景 |
-| `card` | `#FFFFFF` | 普通卡片、底部导航、弹层 |
-| `cardSoft` | `#F1FAFC` | AI 提示卡、浅提示区、分段控件背景 |
-| `textPrimary` | `#0F172A` | 标题、重要数字、主要正文 |
-| `textSecondary` | `#64748B` | 说明文案、时间、辅助信息 |
-| `textMuted` | `#94A3B8` | 低优先级文字、未选中导航 |
-| `border` | `#E6EEF3` | 卡片边框、分割线 |
-| `success` | `#14B8A6` | 正确、已掌握、提升状态 |
-| `warning` | `#F59E0B` | 高频弱项、需注意状态 |
-| `error` | `#EF4444` | 错误、严重超时、危险提示 |
+| Token           | 颜色      | 用途                              |
+| --------------- | --------- | --------------------------------- |
+| `primary`       | `#32B2CB` | 主按钮、选中态、进度、关键图标    |
+| `primaryDark`   | `#1F9DB7` | 主色按压态、强调文字              |
+| `primaryLight`  | `#8EDBE6` | 轻量数据图、弱强调背景元素        |
+| `cyanSoft`      | `#DDF5F8` | 选中项背景、弱提示标签            |
+| `background`    | `#F7FBFD` | 页面背景                          |
+| `card`          | `#FFFFFF` | 普通卡片、底部导航、弹层          |
+| `cardSoft`      | `#F1FAFC` | AI 提示卡、浅提示区、分段控件背景 |
+| `textPrimary`   | `#0F172A` | 标题、重要数字、主要正文          |
+| `textSecondary` | `#64748B` | 说明文案、时间、辅助信息          |
+| `textMuted`     | `#94A3B8` | 低优先级文字、未选中导航          |
+| `border`        | `#E6EEF3` | 卡片边框、分割线                  |
+| `success`       | `#14B8A6` | 正确、已掌握、提升状态            |
+| `warning`       | `#F59E0B` | 高频弱项、需注意状态              |
+| `error`         | `#EF4444` | 错误、严重超时、危险提示          |
 
 ## 使用规范
 
@@ -38,9 +38,26 @@ Glacier Cyan 是智梦考公助手移动端的默认视觉色系。整体风格�
 - AI 提示卡使用 `colors.cardSoft` 或 `colors.cyanSoft`。
 - 错误状态只在文字、小图标或局部标签上使用 `colors.error`，不要大面积铺红。
 
+## NativeWind Token
+
+项目已接入 NativeWind，`tailwind.config.js` 中同步维护 `glacier` 色板。
+
+常用 class 示例：
+
+- 页面背景：`bg-glacier-background`
+- 普通卡片：`bg-glacier-card border-glacier-border`
+- 浅提示卡：`bg-glacier-cardSoft` 或 `bg-glacier-soft`
+- 主按钮：`bg-glacier-primary`
+- 主文字：`text-glacier-textPrimary`
+- 次级文字：`text-glacier-textSecondary`
+- 弱文字：`text-glacier-textMuted`
+- 成功状态：`text-glacier-success`
+- 警告状态：`text-glacier-warning`
+- 错误状态：`text-glacier-error`
+
 ## 代码约束
 
-- React Native 页面必须从 `src/theme/colors.ts` 引入 `colors`。
-- 页面和组件中不要直接写死 hex 色值。
-- 如果后续引入 NativeWind，需要把同一套色值同步到 `tailwind.config.js` 的 `theme.extend.colors.glacier`。
+- React Native 页面可以继续从 `src/theme/colors.ts` 引入 `colors`，也可以使用 NativeWind class。
+- 新增 UI 优先使用 NativeWind 的 `glacier` token 或 `src/theme/colors.ts`，不要直接写死 hex 色值。
+- `src/theme/colors.ts` 与 `tailwind.config.js` 的 `theme.extend.colors.glacier` 必须保持一致。
 - 新增页面应优先复用现有 token，不创建第二套颜色系统。
