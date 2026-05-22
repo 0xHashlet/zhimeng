@@ -1,4 +1,4 @@
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
   Brain,
@@ -18,25 +18,27 @@ const suggestions = [
 
 export function WrongReviewScreen() {
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={styles.container}>
-        <View style={styles.topBar}>
+    <SafeAreaView className="flex-1 bg-glacier-background">
+      <View className="flex-1">
+        <View className="h-[58px] flex-row items-center justify-between px-3.5">
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="返回上一页"
-            style={styles.iconButton}
+            className="h-11 w-11 items-center justify-center"
           >
-            <ChevronLeft color={colors.text} size={24} />
+            <ChevronLeft color={colors.textPrimary} size={24} />
           </Pressable>
-          <Text style={styles.title}>错题复盘</Text>
-          <View style={styles.iconButton} />
+          <Text className="text-lg font-extrabold text-glacier-textPrimary">
+            错题复盘
+          </Text>
+          <View className="h-11 w-11" />
         </View>
 
         <ScrollView
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.content}
+          contentContainerClassName="gap-3.5 px-5 pb-6"
         >
-          <View style={styles.tabs}>
+          <View className="flex-row rounded-2xl bg-glacier-cardSoft p-1">
             {tabs.map((tab) => {
               const active = tab === "待复盘";
 
@@ -45,9 +47,19 @@ export function WrongReviewScreen() {
                   key={tab}
                   accessibilityRole="tab"
                   accessibilityState={{ selected: active }}
-                  style={[styles.tabItem, active ? styles.tabActive : null]}
+                  className={[
+                    "min-h-9 flex-1 items-center justify-center rounded-[9px]",
+                    active ? "border border-glacier-primary bg-glacier-card" : ""
+                  ].join(" ")}
                 >
-                  <Text style={[styles.tabText, active ? styles.tabTextActive : null]}>
+                  <Text
+                    className={[
+                      "text-sm font-bold",
+                      active
+                        ? "text-glacier-primary"
+                        : "text-glacier-textSecondary"
+                    ].join(" ")}
+                  >
                     {tab}
                   </Text>
                 </Pressable>
@@ -55,14 +67,20 @@ export function WrongReviewScreen() {
             })}
           </View>
 
-          <Text style={styles.countText}>共 4 题</Text>
+          <Text className="text-[13px] font-semibold text-glacier-textSecondary">
+            共 4 题
+          </Text>
 
-          <View style={styles.questionCard}>
-            <View style={styles.questionHeader}>
-              <View style={styles.tag}>
-                <Text style={styles.tagText}>增长量</Text>
+          <View className="rounded-3xl border border-glacier-border bg-glacier-card p-4">
+            <View className="mb-3.5 flex-row items-center justify-between">
+              <View className="rounded-[10px] bg-glacier-soft px-2.5 py-1.5">
+                <Text className="text-[13px] font-extrabold text-glacier-primary">
+                  增长量
+                </Text>
               </View>
-              <Text style={styles.questionIndex}>第 3 题</Text>
+              <Text className="text-[13px] font-semibold text-glacier-textSecondary">
+                第 3 题
+              </Text>
             </View>
 
             <InfoRow label="你的答案" value="A" />
@@ -71,57 +89,69 @@ export function WrongReviewScreen() {
             <InfoRow label="推荐用时" value="75秒" />
             <InfoRow label="错因" value="公式没想起来" danger />
 
-            <View style={styles.questionActions}>
+            <View className="mt-4 flex-row gap-2.5">
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel="查看解析"
-                style={styles.secondaryButton}
+                className="min-h-[46px] flex-1 items-center justify-center rounded-2xl border border-glacier-border bg-glacier-card"
               >
-                <Text style={styles.secondaryButtonText}>查看解析</Text>
+                <Text className="text-sm font-extrabold text-glacier-primary">
+                  查看解析
+                </Text>
               </Pressable>
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel="标记已掌握"
-                style={styles.primaryButton}
+                className="min-h-[46px] flex-1 flex-row items-center justify-center gap-1.5 rounded-2xl bg-glacier-primary"
               >
-                <CheckCircle2 color={colors.surface} size={18} />
-                <Text style={styles.primaryButtonText}>标记已掌握</Text>
+                <CheckCircle2 color={colors.card} size={18} />
+                <Text className="text-sm font-extrabold text-glacier-card">
+                  标记已掌握
+                </Text>
               </Pressable>
             </View>
           </View>
 
-          <View style={styles.aiCard}>
-            <View style={styles.aiHeader}>
-              <View style={styles.aiIcon}>
+          <View className="rounded-3xl border border-glacier-border bg-glacier-card p-4">
+            <View className="flex-row items-center gap-2.5">
+              <View className="h-8 w-8 items-center justify-center rounded-full bg-glacier-cardSoft">
                 <Brain color={colors.primary} size={20} />
               </View>
-              <Text style={styles.aiTitle}>AI 复盘建议</Text>
+              <Text className="text-base font-extrabold text-glacier-textPrimary">
+                AI 复盘建议
+              </Text>
             </View>
 
-            <View style={styles.suggestionList}>
+            <View className="mt-3.5 gap-2.5">
               {suggestions.map((item) => (
-                <View key={item} style={styles.suggestionItem}>
-                  <Text style={styles.bullet}>•</Text>
-                  <Text style={styles.suggestionText}>{item}</Text>
+                <View key={item} className="flex-row gap-2">
+                  <Text className="text-[15px] leading-[23px] text-glacier-textPrimary">
+                    •
+                  </Text>
+                  <Text className="flex-1 text-sm leading-[23px] text-glacier-textPrimary">
+                    {item}
+                  </Text>
                 </View>
               ))}
             </View>
 
-            <View style={styles.pager}>
+            <View className="mt-[18px] flex-row items-center justify-center gap-4">
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel="上一条建议"
-                style={styles.pagerButton}
+                className="h-[34px] w-[34px] items-center justify-center rounded-full bg-glacier-cardSoft"
               >
                 <ChevronLeft color={colors.textMuted} size={20} />
               </Pressable>
-              <Text style={styles.pagerText}>1 / 4</Text>
+              <Text className="text-[15px] font-bold text-glacier-textPrimary">
+                1 / 4
+              </Text>
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel="下一条建议"
-                style={styles.pagerButton}
+                className="h-[34px] w-[34px] items-center justify-center rounded-full bg-glacier-cardSoft"
               >
-                <ChevronRight color={colors.text} size={20} />
+                <ChevronRight color={colors.textPrimary} size={20} />
               </Pressable>
             </View>
           </View>
@@ -143,233 +173,20 @@ function InfoRow({
   value: string;
 }) {
   return (
-    <View style={styles.infoRow}>
-      <Text style={styles.infoLabel}>{label}</Text>
+    <View className="min-h-10 flex-row items-center justify-between border-b border-glacier-border">
+      <Text className="text-sm font-medium text-glacier-textPrimary">{label}</Text>
       <Text
-        style={[
-          styles.infoValue,
-          highlight ? styles.infoHighlight : null,
-          danger ? styles.infoDanger : null
-        ]}
+        className={[
+          "text-[15px] font-extrabold",
+          highlight
+            ? "text-glacier-primary"
+            : danger
+              ? "text-glacier-error"
+              : "text-glacier-textPrimary"
+        ].join(" ")}
       >
         {value}
       </Text>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: colors.background
-  },
-  container: {
-    flex: 1
-  },
-  topBar: {
-    height: 58,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 14
-  },
-  iconButton: {
-    alignItems: "center",
-    justifyContent: "center",
-    width: 44,
-    height: 44
-  },
-  title: {
-    color: colors.text,
-    fontSize: 18,
-    fontWeight: "800"
-  },
-  content: {
-    paddingHorizontal: 20,
-    paddingBottom: 24,
-    gap: 14
-  },
-  tabs: {
-    flexDirection: "row",
-    padding: 4,
-    borderRadius: 16,
-    backgroundColor: colors.cardSoft
-  },
-  tabItem: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    minHeight: 36,
-    borderRadius: 9
-  },
-  tabActive: {
-    backgroundColor: colors.card,
-    borderWidth: 1,
-    borderColor: colors.primary
-  },
-  tabText: {
-    color: colors.textSecondary,
-    fontSize: 14,
-    fontWeight: "700"
-  },
-  tabTextActive: {
-    color: colors.primary
-  },
-  countText: {
-    color: colors.textSecondary,
-    fontSize: 13,
-    fontWeight: "600"
-  },
-  questionCard: {
-    padding: 16,
-    borderRadius: 24,
-    backgroundColor: colors.card,
-    borderWidth: 1,
-    borderColor: colors.border
-  },
-  questionHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 14
-  },
-  tag: {
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 10,
-    backgroundColor: colors.cyanSoft
-  },
-  tagText: {
-    color: colors.primary,
-    fontSize: 13,
-    fontWeight: "800"
-  },
-  questionIndex: {
-    color: colors.textSecondary,
-    fontSize: 13,
-    fontWeight: "600"
-  },
-  infoRow: {
-    minHeight: 40,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border
-  },
-  infoLabel: {
-    color: colors.text,
-    fontSize: 14,
-    fontWeight: "500"
-  },
-  infoValue: {
-    color: colors.text,
-    fontSize: 15,
-    fontWeight: "800"
-  },
-  infoHighlight: {
-    color: colors.primary
-  },
-  infoDanger: {
-    color: colors.error
-  },
-  questionActions: {
-    marginTop: 16,
-    flexDirection: "row",
-    gap: 10
-  },
-  secondaryButton: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    minHeight: 46,
-    borderRadius: 16,
-    backgroundColor: colors.card,
-    borderWidth: 1,
-    borderColor: colors.border
-  },
-  secondaryButtonText: {
-    color: colors.primary,
-    fontSize: 14,
-    fontWeight: "800"
-  },
-  primaryButton: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 6,
-    minHeight: 46,
-    borderRadius: 16,
-    backgroundColor: colors.primary
-  },
-  primaryButtonText: {
-    color: colors.card,
-    fontSize: 14,
-    fontWeight: "800"
-  },
-  aiCard: {
-    padding: 16,
-    borderRadius: 24,
-    backgroundColor: colors.card,
-    borderWidth: 1,
-    borderColor: colors.border
-  },
-  aiHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10
-  },
-  aiIcon: {
-    alignItems: "center",
-    justifyContent: "center",
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: colors.cardSoft
-  },
-  aiTitle: {
-    color: colors.text,
-    fontSize: 16,
-    fontWeight: "800"
-  },
-  suggestionList: {
-    marginTop: 14,
-    gap: 10
-  },
-  suggestionItem: {
-    flexDirection: "row",
-    gap: 8
-  },
-  bullet: {
-    color: colors.text,
-    fontSize: 15,
-    lineHeight: 23
-  },
-  suggestionText: {
-    flex: 1,
-    color: colors.text,
-    fontSize: 14,
-    lineHeight: 23
-  },
-  pager: {
-    marginTop: 18,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 16
-  },
-  pagerButton: {
-    alignItems: "center",
-    justifyContent: "center",
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: colors.cardSoft
-  },
-  pagerText: {
-    color: colors.text,
-    fontSize: 15,
-    fontWeight: "700"
-  }
-});

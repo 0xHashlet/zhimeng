@@ -1,10 +1,4 @@
-import {
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View
-} from "react-native";
+import { Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
   BarChart3,
@@ -60,30 +54,41 @@ const actionItems = [
 
 export function DashboardScreen() {
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView className="flex-1 bg-glacier-background">
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.content}
+        contentContainerClassName="gap-3.5 px-5 pb-7 pt-5"
       >
-        <View style={styles.header}>
-          <View style={styles.headerText}>
-            <Text style={styles.title}>资料分析提速诊断器</Text>
-            <Text style={styles.subtitle}>不盲刷，先找到你为什么慢、为什么错</Text>
+        <View className="flex-row items-start justify-between gap-4">
+          <View className="flex-1">
+            <Text className="text-[25px] font-extrabold leading-8 text-glacier-textPrimary">
+              资料分析提速诊断器
+            </Text>
+            <Text className="mt-2 text-sm leading-[21px] text-glacier-textSecondary">
+              不盲刷，先找到你为什么慢、为什么错
+            </Text>
           </View>
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="查看学习数据"
-            style={styles.headerButton}
+            className="h-11 w-11 items-center justify-center rounded-full border border-glacier-border bg-glacier-card"
           >
-            <BarChart3 color={colors.text} size={22} />
+            <BarChart3 color={colors.textPrimary} size={22} />
           </Pressable>
         </View>
 
-        <View style={styles.metricGrid}>
+        <View className="flex-row gap-2">
           {metricCards.map((item) => (
-            <View key={item.title} style={styles.metricCard}>
-              <Text style={styles.metricTitle}>{item.title}</Text>
-              <Text style={styles.metricValue}>{item.value}</Text>
+            <View
+              key={item.title}
+              className="min-h-[116px] flex-1 rounded-[22px] border border-glacier-border bg-glacier-card p-3 shadow-sm"
+            >
+              <Text className="text-[13px] font-semibold text-glacier-textPrimary">
+                {item.title}
+              </Text>
+              <Text className="mt-2.5 text-[26px] font-extrabold text-glacier-textPrimary">
+                {item.value}
+              </Text>
               {item.type === "line" ? (
                 <MiniLine values={item.trend} />
               ) : (
@@ -93,19 +98,21 @@ export function DashboardScreen() {
           ))}
         </View>
 
-        <View style={styles.suggestionCard}>
-          <View style={styles.suggestionIcon}>
+        <View className="flex-row gap-3 rounded-3xl border border-glacier-border bg-glacier-card p-4">
+          <View className="h-8 w-8 items-center justify-center rounded-full bg-glacier-cardSoft">
             <LineChart color={colors.primary} size={18} />
           </View>
-          <View style={styles.suggestionBody}>
-            <Text style={styles.cardTitle}>今日建议</Text>
-            <Text style={styles.cardDescription}>
+          <View className="flex-1">
+            <Text className="text-base font-bold text-glacier-textPrimary">
+              今日建议
+            </Text>
+            <Text className="mt-2 text-sm leading-[22px] text-glacier-textSecondary">
               先完成 10 题诊断，系统会分析你的正确率、平均用时和高频弱项
             </Text>
           </View>
         </View>
 
-        <View style={styles.actionList}>
+        <View className="overflow-hidden rounded-[22px] border border-glacier-border bg-glacier-card">
           {actionItems.map((item) => {
             const Icon = item.icon;
 
@@ -114,14 +121,18 @@ export function DashboardScreen() {
                 key={item.title}
                 accessibilityRole="button"
                 accessibilityLabel={item.title}
-                style={styles.actionItem}
+                className="min-h-[72px] flex-row items-center gap-3 border-b border-glacier-border px-3.5"
               >
-                <View style={styles.actionIcon}>
-                  <Icon color={colors.surface} size={20} />
+                <View className="h-10 w-10 items-center justify-center rounded-[10px] bg-glacier-primary">
+                  <Icon color={colors.card} size={20} />
                 </View>
-                <View style={styles.actionText}>
-                  <Text style={styles.actionTitle}>{item.title}</Text>
-                  <Text style={styles.actionDescription}>{item.description}</Text>
+                <View className="flex-1">
+                  <Text className="text-base font-bold text-glacier-textPrimary">
+                    {item.title}
+                  </Text>
+                  <Text className="mt-1 text-[13px] text-glacier-textSecondary">
+                    {item.description}
+                  </Text>
                 </View>
                 <ChevronRight color={colors.textMuted} size={20} />
               </Pressable>
@@ -129,26 +140,36 @@ export function DashboardScreen() {
           })}
         </View>
 
-        <View style={styles.recentCard}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>最近诊断</Text>
+        <View className="rounded-3xl border border-glacier-border bg-glacier-card p-4">
+          <View className="flex-row items-center justify-between">
+            <Text className="text-base font-bold text-glacier-textPrimary">
+              最近诊断
+            </Text>
             <Pressable accessibilityRole="button" accessibilityLabel="查看全部诊断">
-              <Text style={styles.sectionLink}>查看全部</Text>
+              <Text className="text-[13px] font-semibold text-glacier-textSecondary">
+                查看全部
+              </Text>
             </Pressable>
           </View>
 
-          <Text style={styles.recentDate}>2024/05/15 10:23 完成 10 题诊断</Text>
-          <View style={styles.recentStats}>
-            <View style={styles.recentStat}>
+          <Text className="mt-3.5 text-[13px] leading-5 text-glacier-textSecondary">
+            2024/05/15 10:23 完成 10 题诊断
+          </Text>
+          <View className="mt-3 gap-2">
+            <View className="flex-row items-center gap-2">
               <BookOpenCheck color={colors.primary} size={18} />
-              <Text style={styles.recentStatText}>正确率 70%</Text>
+              <Text className="text-sm font-semibold text-glacier-textPrimary">
+                正确率 70%
+              </Text>
             </View>
-            <View style={styles.recentStat}>
+            <View className="flex-row items-center gap-2">
               <Timer color={colors.primary} size={18} />
-              <Text style={styles.recentStatText}>平均用时 86 秒</Text>
+              <Text className="text-sm font-semibold text-glacier-textPrimary">
+                平均用时 86 秒
+              </Text>
             </View>
           </View>
-          <View style={styles.weakTags}>
+          <View className="mt-3 flex-row flex-wrap gap-2">
             <WeakTag label="增长量" />
             <WeakTag label="综合分析" />
           </View>
@@ -160,17 +181,15 @@ export function DashboardScreen() {
 
 function MiniLine({ values }: { values: readonly number[] }) {
   return (
-    <View style={styles.lineChart} accessibilityLabel="趋势上升">
+    <View className="mt-3 h-6 flex-row items-start gap-[3px]" accessibilityLabel="趋势上升">
       {values.map((value, index) => (
         <View
           key={`${value}-${index}`}
-          style={[
-            styles.lineDot,
-            {
-              height: value,
-              marginTop: 18 - value
-            }
-          ]}
+          className="w-2.5 rounded-full border-t-2 border-glacier-primary"
+          style={{
+            height: value,
+            marginTop: 18 - value
+          }}
         />
       ))}
     </View>
@@ -179,16 +198,14 @@ function MiniLine({ values }: { values: readonly number[] }) {
 
 function MiniBars({ values }: { values: readonly number[] }) {
   return (
-    <View style={styles.barChart} accessibilityLabel="弱项分布柱状图">
+    <View className="mt-2.5 h-[30px] flex-row items-end gap-[3px]" accessibilityLabel="弱项分布柱状图">
       {values.map((value, index) => (
         <View
           key={`${value}-${index}`}
-          style={[
-            styles.bar,
-            {
-              height: value + 4
-            }
-          ]}
+          className="flex-1 rounded-[3px] bg-glacier-primaryLight"
+          style={{
+            height: value + 4
+          }}
         />
       ))}
     </View>
@@ -197,240 +214,9 @@ function MiniBars({ values }: { values: readonly number[] }) {
 
 function WeakTag({ label }: { label: string }) {
   return (
-    <View style={styles.weakTag}>
+    <View className="flex-row items-center gap-1 rounded-full bg-glacier-soft px-2.5 py-1.5">
       <TrendingUp color={colors.primary} size={14} />
-      <Text style={styles.weakTagText}>{label}</Text>
+      <Text className="text-xs font-bold text-glacier-primary">{label}</Text>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: colors.background
-  },
-  content: {
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 28,
-    gap: 14
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    justifyContent: "space-between",
-    gap: 16
-  },
-  headerText: {
-    flex: 1
-  },
-  title: {
-    color: colors.text,
-    fontSize: 25,
-    fontWeight: "800",
-    lineHeight: 32
-  },
-  subtitle: {
-    marginTop: 8,
-    color: colors.textSecondary,
-    fontSize: 14,
-    lineHeight: 21
-  },
-  headerButton: {
-    alignItems: "center",
-    justifyContent: "center",
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: colors.card,
-    borderWidth: 1,
-    borderColor: colors.border
-  },
-  metricGrid: {
-    flexDirection: "row",
-    gap: 8
-  },
-  metricCard: {
-    flex: 1,
-    minHeight: 116,
-    padding: 12,
-    borderRadius: 22,
-    backgroundColor: colors.card,
-    borderWidth: 1,
-    borderColor: colors.border,
-    shadowColor: colors.textPrimary,
-    shadowOpacity: 0.04,
-    shadowRadius: 12,
-    shadowOffset: {
-      width: 0,
-      height: 4
-    },
-    elevation: 2
-  },
-  metricTitle: {
-    color: colors.text,
-    fontSize: 13,
-    fontWeight: "600"
-  },
-  metricValue: {
-    marginTop: 10,
-    color: colors.text,
-    fontSize: 26,
-    fontWeight: "800"
-  },
-  lineChart: {
-    height: 24,
-    marginTop: 12,
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 3
-  },
-  lineDot: {
-    width: 10,
-    borderTopWidth: 2,
-    borderColor: colors.primary,
-    borderRadius: 999
-  },
-  barChart: {
-    height: 30,
-    marginTop: 10,
-    flexDirection: "row",
-    alignItems: "flex-end",
-    gap: 3
-  },
-  bar: {
-    flex: 1,
-    borderRadius: 3,
-    backgroundColor: colors.primaryLight
-  },
-  suggestionCard: {
-    flexDirection: "row",
-    gap: 12,
-    padding: 16,
-    borderRadius: 24,
-    backgroundColor: colors.card,
-    borderWidth: 1,
-    borderColor: colors.border
-  },
-  suggestionIcon: {
-    alignItems: "center",
-    justifyContent: "center",
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: colors.cardSoft
-  },
-  suggestionBody: {
-    flex: 1
-  },
-  cardTitle: {
-    color: colors.text,
-    fontSize: 16,
-    fontWeight: "700"
-  },
-  cardDescription: {
-    marginTop: 8,
-    color: colors.textSecondary,
-    fontSize: 14,
-    lineHeight: 22
-  },
-  actionList: {
-    overflow: "hidden",
-    borderRadius: 22,
-    backgroundColor: colors.card,
-    borderWidth: 1,
-    borderColor: colors.border
-  },
-  actionItem: {
-    minHeight: 72,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    paddingHorizontal: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border
-  },
-  actionIcon: {
-    alignItems: "center",
-    justifyContent: "center",
-    width: 40,
-    height: 40,
-    borderRadius: 10,
-    backgroundColor: colors.primary
-  },
-  actionText: {
-    flex: 1
-  },
-  actionTitle: {
-    color: colors.text,
-    fontSize: 16,
-    fontWeight: "700"
-  },
-  actionDescription: {
-    marginTop: 4,
-    color: colors.textSecondary,
-    fontSize: 13
-  },
-  recentCard: {
-    padding: 16,
-    borderRadius: 24,
-    backgroundColor: colors.card,
-    borderWidth: 1,
-    borderColor: colors.border
-  },
-  sectionHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between"
-  },
-  sectionTitle: {
-    color: colors.text,
-    fontSize: 16,
-    fontWeight: "700"
-  },
-  sectionLink: {
-    color: colors.textSecondary,
-    fontSize: 13,
-    fontWeight: "600"
-  },
-  recentDate: {
-    marginTop: 14,
-    color: colors.textSecondary,
-    fontSize: 13,
-    lineHeight: 20
-  },
-  recentStats: {
-    marginTop: 12,
-    gap: 8
-  },
-  recentStat: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8
-  },
-  recentStatText: {
-    color: colors.text,
-    fontSize: 14,
-    fontWeight: "600"
-  },
-  weakTags: {
-    marginTop: 12,
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8
-  },
-  weakTag: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 999,
-    backgroundColor: colors.cyanSoft
-  },
-  weakTagText: {
-    color: colors.primary,
-    fontSize: 12,
-    fontWeight: "700"
-  }
-});

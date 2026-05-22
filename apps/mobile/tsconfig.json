@@ -11,6 +11,7 @@
   },
   "include": [
     "App.tsx",
+    "nativewind-env.d.ts",
     "src/**/*.ts",
     "src/**/*.tsx"
   ]

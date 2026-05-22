@@ -1,4 +1,4 @@
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
   BarChart3,
@@ -41,88 +41,111 @@ const trainingItems = [
 
 export function DiagnosticReportScreen() {
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={styles.container}>
-        <View style={styles.topBar}>
+    <SafeAreaView className="flex-1 bg-glacier-background">
+      <View className="flex-1">
+        <View className="min-h-16 flex-row items-center px-3.5">
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="返回上一页"
-            style={styles.iconButton}
+            className="h-11 w-11 items-center justify-center"
           >
-            <ChevronLeft color={colors.text} size={24} />
+            <ChevronLeft color={colors.textPrimary} size={24} />
           </Pressable>
-          <View style={styles.titleBlock}>
-            <Text style={styles.title}>提速诊断报告</Text>
-            <Text style={styles.reportTime}>2024/05/15 10:23 · 10 题诊断</Text>
+          <View className="flex-1 items-center">
+            <Text className="text-lg font-extrabold text-glacier-textPrimary">
+              提速诊断报告
+            </Text>
+            <Text className="mt-1.5 text-xs text-glacier-textSecondary">
+              2024/05/15 10:23 · 10 题诊断
+            </Text>
           </View>
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="分享报告"
-            style={styles.iconButton}
+            className="h-11 w-11 items-center justify-center"
           >
-            <Share2 color={colors.text} size={21} />
+            <Share2 color={colors.textPrimary} size={21} />
           </Pressable>
         </View>
 
         <ScrollView
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.content}
+          contentContainerClassName="gap-3.5 px-5 pb-5"
         >
-          <View style={styles.summaryGrid}>
+          <View className="flex-row gap-2">
             {summaryStats.map((item) => {
               const Icon = item.icon;
 
               return (
-                <View key={item.title} style={styles.summaryCard}>
+                <View
+                  key={item.title}
+                  className="min-h-[102px] flex-1 items-start rounded-[22px] border border-glacier-border bg-glacier-card p-3"
+                >
                   <Icon color={colors.primary} size={18} />
-                  <Text style={styles.summaryTitle}>{item.title}</Text>
-                  <Text style={styles.summaryValue}>{item.value}</Text>
+                  <Text className="mt-2 text-xs font-semibold text-glacier-textSecondary">
+                    {item.title}
+                  </Text>
+                  <Text className="mt-2 text-[25px] font-extrabold text-glacier-textPrimary">
+                    {item.value}
+                  </Text>
                 </View>
               );
             })}
           </View>
 
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>核心结论</Text>
-            <Text style={styles.conclusionText}>
+          <View className="rounded-3xl border border-glacier-border bg-glacier-card p-4">
+            <Text className="text-base font-extrabold text-glacier-textPrimary">
+              核心结论
+            </Text>
+            <Text className="mt-3 text-[15px] leading-[25px] text-glacier-textPrimary">
               你不是完全不会，而是增长量题型不稳定，并且综合分析题用时偏长。
             </Text>
           </View>
 
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>高频弱项</Text>
-            <View style={styles.weakList}>
+          <View className="rounded-3xl border border-glacier-border bg-glacier-card p-4">
+            <Text className="text-base font-extrabold text-glacier-textPrimary">
+              高频弱项
+            </Text>
+            <View className="mt-2.5 gap-0.5">
               {weakPoints.map((item, index) => (
                 <Pressable
                   key={item}
                   accessibilityRole="button"
                   accessibilityLabel={`查看弱项 ${item}`}
-                  style={styles.weakItem}
+                  className="min-h-[46px] flex-row items-center gap-2.5"
                 >
-                  <View style={styles.rankBadge}>
-                    <Text style={styles.rankText}>{index + 1}</Text>
+                  <View className="h-6 w-6 items-center justify-center rounded-full bg-glacier-soft">
+                    <Text className="text-[13px] font-extrabold text-glacier-warning">
+                      {index + 1}
+                    </Text>
                   </View>
-                  <Text style={styles.weakText}>{item}</Text>
+                  <Text className="flex-1 text-[15px] font-semibold text-glacier-textPrimary">
+                    {item}
+                  </Text>
                   <ChevronRight color={colors.textMuted} size={20} />
                 </Pressable>
               ))}
             </View>
           </View>
 
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>下一步训练建议</Text>
-            <View style={styles.trainingList}>
+          <View className="rounded-3xl border border-glacier-border bg-glacier-card p-4">
+            <Text className="text-base font-extrabold text-glacier-textPrimary">
+              下一步训练建议
+            </Text>
+            <View className="mt-3 gap-3.5">
               {trainingItems.map((item) => {
                 const Icon = item.icon;
 
                 return (
-                  <View key={item.title} style={styles.trainingItem}>
-                    <View style={styles.trainingIcon}>
-                      <Icon color={colors.surface} size={18} />
+                  <View key={item.title} className="flex-row items-center gap-3">
+                    <View className="h-9 w-9 items-center justify-center rounded-xl bg-glacier-primary">
+                      <Icon color={colors.card} size={18} />
                     </View>
-                    <View style={styles.trainingText}>
-                      <Text style={styles.trainingTitle}>{item.title}</Text>
-                      <Text style={styles.trainingDescription}>
+                    <View className="flex-1">
+                      <Text className="text-[15px] font-bold text-glacier-textPrimary">
+                        {item.title}
+                      </Text>
+                      <Text className="mt-1 text-[13px] leading-[19px] text-glacier-textSecondary">
                         {item.description}
                       </Text>
                     </View>
@@ -133,201 +156,27 @@ export function DiagnosticReportScreen() {
           </View>
         </ScrollView>
 
-        <View style={styles.footer}>
+        <View className="gap-2.5 bg-glacier-background px-5 pb-4 pt-3">
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="去专项训练"
-            style={styles.primaryButton}
+            className="min-h-[54px] items-center justify-center rounded-2xl bg-glacier-primary"
           >
-            <Text style={styles.primaryButtonText}>去专项训练</Text>
+            <Text className="text-base font-extrabold text-glacier-card">
+              去专项训练
+            </Text>
           </Pressable>
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="查看错题复盘"
-            style={styles.secondaryButton}
+            className="min-h-[46px] items-center justify-center rounded-2xl border border-glacier-border bg-glacier-card"
           >
-            <Text style={styles.secondaryButtonText}>查看错题复盘</Text>
+            <Text className="text-[15px] font-extrabold text-glacier-primary">
+              查看错题复盘
+            </Text>
           </Pressable>
         </View>
       </View>
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: colors.background
-  },
-  container: {
-    flex: 1
-  },
-  topBar: {
-    minHeight: 64,
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 14
-  },
-  iconButton: {
-    alignItems: "center",
-    justifyContent: "center",
-    width: 44,
-    height: 44
-  },
-  titleBlock: {
-    flex: 1,
-    alignItems: "center"
-  },
-  title: {
-    color: colors.text,
-    fontSize: 18,
-    fontWeight: "800"
-  },
-  reportTime: {
-    marginTop: 6,
-    color: colors.textSecondary,
-    fontSize: 12
-  },
-  content: {
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-    gap: 14
-  },
-  summaryGrid: {
-    flexDirection: "row",
-    gap: 8
-  },
-  summaryCard: {
-    flex: 1,
-    alignItems: "flex-start",
-    minHeight: 102,
-    padding: 12,
-    borderRadius: 22,
-    backgroundColor: colors.card,
-    borderWidth: 1,
-    borderColor: colors.border
-  },
-  summaryTitle: {
-    marginTop: 8,
-    color: colors.textSecondary,
-    fontSize: 12,
-    fontWeight: "600"
-  },
-  summaryValue: {
-    marginTop: 8,
-    color: colors.text,
-    fontSize: 25,
-    fontWeight: "800"
-  },
-  card: {
-    padding: 16,
-    borderRadius: 24,
-    backgroundColor: colors.card,
-    borderWidth: 1,
-    borderColor: colors.border
-  },
-  cardTitle: {
-    color: colors.text,
-    fontSize: 16,
-    fontWeight: "800"
-  },
-  conclusionText: {
-    marginTop: 12,
-    color: colors.text,
-    fontSize: 15,
-    lineHeight: 25
-  },
-  weakList: {
-    marginTop: 10,
-    gap: 2
-  },
-  weakItem: {
-    minHeight: 46,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10
-  },
-  rankBadge: {
-    alignItems: "center",
-    justifyContent: "center",
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: colors.cyanSoft
-  },
-  rankText: {
-    color: colors.warning,
-    fontSize: 13,
-    fontWeight: "800"
-  },
-  weakText: {
-    flex: 1,
-    color: colors.text,
-    fontSize: 15,
-    fontWeight: "600"
-  },
-  trainingList: {
-    marginTop: 12,
-    gap: 14
-  },
-  trainingItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12
-  },
-  trainingIcon: {
-    alignItems: "center",
-    justifyContent: "center",
-    width: 36,
-    height: 36,
-    borderRadius: 12,
-    backgroundColor: colors.primary
-  },
-  trainingText: {
-    flex: 1
-  },
-  trainingTitle: {
-    color: colors.text,
-    fontSize: 15,
-    fontWeight: "700"
-  },
-  trainingDescription: {
-    marginTop: 4,
-    color: colors.textSecondary,
-    fontSize: 13,
-    lineHeight: 19
-  },
-  footer: {
-    gap: 10,
-    paddingHorizontal: 20,
-    paddingTop: 12,
-    paddingBottom: 16,
-    backgroundColor: colors.background
-  },
-  primaryButton: {
-    alignItems: "center",
-    justifyContent: "center",
-    minHeight: 54,
-    borderRadius: 16,
-    backgroundColor: colors.primary
-  },
-  primaryButtonText: {
-    color: colors.card,
-    fontSize: 16,
-    fontWeight: "800"
-  },
-  secondaryButton: {
-    alignItems: "center",
-    justifyContent: "center",
-    minHeight: 46,
-    borderRadius: 16,
-    backgroundColor: colors.card,
-    borderWidth: 1,
-    borderColor: colors.border
-  },
-  secondaryButtonText: {
-    color: colors.primary,
-    fontSize: 15,
-    fontWeight: "800"
-  }
-});

@@ -1,11 +1,4 @@
-import {
-  Dimensions,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View
-} from "react-native";
+import { Dimensions, Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Bookmark, Check, ChevronLeft } from "lucide-react-native";
 import { colors } from "../../theme/colors";
@@ -65,27 +58,27 @@ const questions = [
 
 export function DiagnosticTestScreen() {
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={styles.container}>
-        <View style={styles.topBar}>
+    <SafeAreaView className="flex-1 bg-glacier-background">
+      <View className="flex-1">
+        <View className="h-14 flex-row items-center justify-between px-3.5">
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="返回上一页"
-            style={styles.iconButton}
+            className="h-11 w-11 items-center justify-center"
           >
-            <ChevronLeft color={colors.text} size={24} />
+            <ChevronLeft color={colors.textPrimary} size={24} />
           </Pressable>
-          <Text style={styles.progressText}>3 / 10</Text>
+          <Text className="text-lg font-bold text-glacier-textPrimary">3 / 10</Text>
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="收藏本题"
-            style={styles.iconButton}
+            className="h-11 w-11 items-center justify-center"
           >
-            <Bookmark color={colors.text} size={22} />
+            <Bookmark color={colors.textPrimary} size={22} />
           </Pressable>
         </View>
-        <View style={styles.progressTrack}>
-          <View style={styles.progressFill} />
+        <View className="h-[3px] bg-glacier-border">
+          <View className="h-[3px] w-[30%] bg-glacier-primary" />
         </View>
 
         <ScrollView
@@ -93,32 +86,39 @@ export function DiagnosticTestScreen() {
           pagingEnabled
           showsHorizontalScrollIndicator={false}
           decelerationRate="fast"
-          contentContainerStyle={styles.pagerContent}
+          contentContainerClassName="items-stretch"
         >
           {questions.map((item) => (
             <ScrollView
               key={item.id}
               showsVerticalScrollIndicator={false}
-              style={styles.questionPage}
-              contentContainerStyle={styles.questionContent}
+              style={{ width: screenWidth }}
+              contentContainerClassName="gap-3.5 px-5 pb-6"
             >
-              <View style={styles.typePill}>
-                <Text style={styles.typeText}>{item.type}</Text>
+              <View className="mt-4 min-h-[30px] self-start rounded-full bg-glacier-cardSoft px-3">
+                <Text className="py-1.5 text-[13px] font-extrabold text-glacier-primary">
+                  {item.type}
+                </Text>
               </View>
 
-              <View style={styles.materialCard}>
+              <View className="gap-2 rounded-[22px] border border-glacier-border bg-glacier-card p-4">
                 {item.material.map((paragraph) => (
-                  <Text key={paragraph} style={styles.materialText}>
+                  <Text
+                    key={paragraph}
+                    className="text-sm leading-6 text-glacier-textPrimary"
+                  >
                     {paragraph}
                   </Text>
                 ))}
               </View>
 
-              <View style={styles.questionCard}>
-                <Text style={styles.questionText}>{item.question}</Text>
+              <View className="py-1">
+                <Text className="text-lg font-bold leading-7 text-glacier-textPrimary">
+                  {item.question}
+                </Text>
               </View>
 
-              <View style={styles.options}>
+              <View className="gap-3">
                 {item.options.map((option) => {
                   const selected = option.key === item.selectedAnswer;
 
@@ -128,27 +128,29 @@ export function DiagnosticTestScreen() {
                       accessibilityRole="button"
                       accessibilityLabel={`选项 ${option.key}，${option.value}`}
                       accessibilityState={{ selected }}
-                      style={[
-                        styles.optionItem,
-                        selected ? styles.optionSelected : null
-                      ]}
+                      className={[
+                        "min-h-[58px] flex-row items-center gap-4 rounded-[18px] border px-4",
+                        selected
+                          ? "border-glacier-primary bg-glacier-soft"
+                          : "border-glacier-border bg-glacier-card"
+                      ].join(" ")}
                     >
                       <Text
-                        style={[
-                          styles.optionKey,
-                          selected ? styles.optionSelectedText : null
-                        ]}
+                        className={[
+                          "text-base font-bold",
+                          selected
+                            ? "text-glacier-primary"
+                            : "text-glacier-textPrimary"
+                        ].join(" ")}
                       >
                         {option.key}
                       </Text>
-                      <Text style={styles.optionValue}>{option.value}</Text>
+                      <Text className="flex-1 text-base font-medium text-glacier-textPrimary">
+                        {option.value}
+                      </Text>
                       {selected ? (
-                        <View style={styles.selectedIcon}>
-                          <Check
-                            color={colors.card}
-                            size={15}
-                            strokeWidth={3}
-                          />
+                        <View className="h-6 w-6 items-center justify-center rounded-full bg-glacier-primary">
+                          <Check color={colors.card} size={15} strokeWidth={3} />
                         </View>
                       ) : null}
                     </Pressable>
@@ -162,128 +164,3 @@ export function DiagnosticTestScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: colors.background
-  },
-  container: {
-    flex: 1
-  },
-  topBar: {
-    height: 56,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 14
-  },
-  iconButton: {
-    alignItems: "center",
-    justifyContent: "center",
-    width: 44,
-    height: 44
-  },
-  progressText: {
-    color: colors.text,
-    fontSize: 18,
-    fontWeight: "700"
-  },
-  progressTrack: {
-    height: 3,
-    backgroundColor: colors.border
-  },
-  progressFill: {
-    width: "30%",
-    height: 3,
-    backgroundColor: colors.primary
-  },
-  pagerContent: {
-    alignItems: "stretch"
-  },
-  questionPage: {
-    width: screenWidth
-  },
-  questionContent: {
-    paddingHorizontal: 20,
-    paddingBottom: 24,
-    gap: 14
-  },
-  typePill: {
-    alignSelf: "flex-start",
-    alignItems: "center",
-    justifyContent: "center",
-    minHeight: 30,
-    paddingHorizontal: 12,
-    marginTop: 16,
-    borderRadius: 999,
-    backgroundColor: colors.cardSoft
-  },
-  typeText: {
-    color: colors.primary,
-    fontSize: 13,
-    fontWeight: "800"
-  },
-  materialCard: {
-    gap: 8,
-    padding: 16,
-    borderRadius: 22,
-    backgroundColor: colors.card,
-    borderWidth: 1,
-    borderColor: colors.border
-  },
-  materialText: {
-    color: colors.text,
-    fontSize: 14,
-    lineHeight: 24
-  },
-  questionCard: {
-    paddingVertical: 4
-  },
-  questionText: {
-    color: colors.text,
-    fontSize: 18,
-    fontWeight: "700",
-    lineHeight: 28
-  },
-  options: {
-    gap: 12
-  },
-  optionItem: {
-    minHeight: 58,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 16,
-    paddingHorizontal: 16,
-    borderRadius: 18,
-    backgroundColor: colors.card,
-    borderWidth: 1,
-    borderColor: colors.border
-  },
-  optionSelected: {
-    borderColor: colors.primary,
-    backgroundColor: colors.cyanSoft
-  },
-  optionKey: {
-    color: colors.text,
-    fontSize: 16,
-    fontWeight: "700"
-  },
-  optionSelectedText: {
-    color: colors.primary
-  },
-  optionValue: {
-    flex: 1,
-    color: colors.text,
-    fontSize: 16,
-    fontWeight: "500"
-  },
-  selectedIcon: {
-    alignItems: "center",
-    justifyContent: "center",
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: colors.primary
-  }
-});

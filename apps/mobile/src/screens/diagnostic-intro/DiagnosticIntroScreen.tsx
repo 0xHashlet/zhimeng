@@ -1,4 +1,4 @@
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Check, Clock3 } from "lucide-react-native";
 import { colors } from "../../theme/colors";
@@ -12,132 +12,45 @@ const introItems = [
 
 export function DiagnosticIntroScreen() {
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={styles.container}>
-        <View style={styles.header}>
-          <Text style={styles.title}>10 题诊断测试</Text>
-          <Text style={styles.description}>通过 10 题诊断，精准定位提速关键</Text>
+    <SafeAreaView className="flex-1 bg-glacier-background">
+      <View className="flex-1 px-[22px] pb-7 pt-11">
+        <View className="mb-7 items-center">
+          <Text className="text-center text-[27px] font-extrabold leading-[34px] text-glacier-textPrimary">
+            10 题诊断测试
+          </Text>
+          <Text className="mt-2.5 text-center text-sm leading-[22px] text-glacier-textSecondary">
+            通过 10 题诊断，精准定位提速关键
+          </Text>
         </View>
 
-        <View style={styles.card}>
+        <View className="flex-1 rounded-[28px] border border-glacier-border bg-glacier-card px-6 pb-6 pt-7 shadow-sm">
           {introItems.map((item) => (
-            <View key={item} style={styles.checkItem}>
-              <View style={styles.checkIcon}>
-                <Check color={colors.surface} size={16} strokeWidth={3} />
+            <View key={item} className="min-h-[52px] flex-row items-center gap-3.5">
+              <View className="h-6 w-6 items-center justify-center rounded-full bg-glacier-primary">
+                <Check color={colors.card} size={16} strokeWidth={3} />
               </View>
-              <Text style={styles.checkText}>{item}</Text>
+              <Text className="flex-1 text-base font-semibold leading-6 text-glacier-textPrimary">
+                {item}
+              </Text>
             </View>
           ))}
 
-          <View style={styles.estimate}>
+          <View className="mt-auto flex-row items-center justify-center gap-2">
             <Clock3 color={colors.textMuted} size={18} />
-            <Text style={styles.estimateText}>预计耗时 12 分钟</Text>
+            <Text className="text-[15px] font-medium text-glacier-textPrimary">
+              预计耗时 12 分钟
+            </Text>
           </View>
         </View>
 
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="开始测试"
-          style={styles.primaryButton}
+          className="mt-6 min-h-[58px] items-center justify-center rounded-2xl bg-glacier-primary"
         >
-          <Text style={styles.primaryButtonText}>开始测试</Text>
+          <Text className="text-lg font-bold text-glacier-card">开始测试</Text>
         </Pressable>
       </View>
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: colors.background
-  },
-  container: {
-    flex: 1,
-    paddingHorizontal: 22,
-    paddingTop: 44,
-    paddingBottom: 28
-  },
-  header: {
-    alignItems: "center",
-    marginBottom: 28
-  },
-  title: {
-    color: colors.text,
-    fontSize: 27,
-    fontWeight: "800",
-    lineHeight: 34,
-    textAlign: "center"
-  },
-  description: {
-    marginTop: 10,
-    color: colors.textSecondary,
-    fontSize: 14,
-    lineHeight: 22,
-    textAlign: "center"
-  },
-  card: {
-    flex: 1,
-    paddingHorizontal: 24,
-    paddingTop: 28,
-    paddingBottom: 24,
-    borderRadius: 28,
-    backgroundColor: colors.card,
-    borderWidth: 1,
-    borderColor: colors.border,
-    shadowColor: colors.textPrimary,
-    shadowOpacity: 0.04,
-    shadowRadius: 16,
-    shadowOffset: {
-      width: 0,
-      height: 6
-    },
-    elevation: 2
-  },
-  checkItem: {
-    minHeight: 52,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 14
-  },
-  checkIcon: {
-    alignItems: "center",
-    justifyContent: "center",
-    width: 24,
-    height: 24,
-    borderRadius: 16,
-    backgroundColor: colors.primary
-  },
-  checkText: {
-    flex: 1,
-    color: colors.text,
-    fontSize: 16,
-    fontWeight: "600",
-    lineHeight: 24
-  },
-  estimate: {
-    marginTop: "auto",
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8
-  },
-  estimateText: {
-    color: colors.text,
-    fontSize: 15,
-    fontWeight: "500"
-  },
-  primaryButton: {
-    alignItems: "center",
-    justifyContent: "center",
-    minHeight: 58,
-    marginTop: 24,
-    borderRadius: 12,
-    backgroundColor: colors.primary
-  },
-  primaryButtonText: {
-    color: colors.card,
-    fontSize: 18,
-    fontWeight: "700"
-  }
-});
