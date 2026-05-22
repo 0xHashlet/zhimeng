@@ -6,6 +6,7 @@ import {
   Home,
   RotateCcw
 } from "lucide-react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { DashboardScreen } from "../screens/dashboard/DashboardScreen";
 import { DiagnosticIntroScreen } from "../screens/diagnostic-intro/DiagnosticIntroScreen";
 import { DiagnosticReportScreen } from "../screens/diagnostic-report/DiagnosticReportScreen";
@@ -24,6 +25,9 @@ export type RootTabParamList = {
 const Tab = createBottomTabNavigator<RootTabParamList>();
 
 export function AppNavigator() {
+  const insets = useSafeAreaInsets();
+  const bottomInset = Math.max(insets.bottom, 18);
+
   return (
     <Tab.Navigator
       initialRouteName="Dashboard"
@@ -32,9 +36,10 @@ export function AppNavigator() {
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textMuted,
         tabBarStyle: {
+          backgroundColor: colors.surface,
           borderTopColor: colors.border,
-          height: 64,
-          paddingBottom: 8,
+          height: 62 + bottomInset,
+          paddingBottom: bottomInset,
           paddingTop: 8
         },
         tabBarLabelStyle: {
