@@ -9,7 +9,6 @@ import {
   type GestureResponderEvent
 } from "react-native";
 import Svg, { Path } from "react-native-svg";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { RotateCcw, Trash2, X } from "lucide-react-native";
 import { colors } from "../theme/colors";
 import type { DraftPoint, DraftStroke } from "../types/draft";
@@ -27,8 +26,6 @@ const TOOLBAR_HEIGHT = 44;
 export function DraftSheet({ onChange, onClose, strokes, visible }: DraftSheetProps) {
   const [currentStroke, setCurrentStroke] = useState<DraftStroke | null>(null);
   const currentStrokeRef = useRef<DraftStroke | null>(null);
-  const insets = useSafeAreaInsets();
-  const canvasTop = insets.top + TOOLBAR_HEIGHT;
 
   useEffect(() => {
     if (!visible) {
@@ -105,10 +102,10 @@ export function DraftSheet({ onChange, onClose, strokes, visible }: DraftSheetPr
 
   return (
     <Modal animationType="fade" transparent visible={visible} onRequestClose={onClose}>
-      <View className="flex-1 bg-glacier-card/30">
+      <View className="flex-1 bg-glacier-card/40">
         <View
           className="absolute bottom-0 left-0 right-0"
-          style={{ top: canvasTop }}
+          style={{ top: TOOLBAR_HEIGHT }}
           {...panResponder.panHandlers}
         >
           <Svg height="100%" width="100%">
@@ -130,8 +127,7 @@ export function DraftSheet({ onChange, onClose, strokes, visible }: DraftSheetPr
         <View
           className="absolute left-0 right-0 border-b border-glacier-border bg-glacier-background px-5"
           style={{
-            height: canvasTop,
-            paddingTop: insets.top
+            height: TOOLBAR_HEIGHT
           }}
         >
           <View className="h-11 flex-row items-center justify-between">
