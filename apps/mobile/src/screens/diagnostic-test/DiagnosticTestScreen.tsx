@@ -2,9 +2,11 @@ import { useEffect, useState } from "react";
 import { Dimensions, Pressable, ScrollView, Text, View } from "react-native";
 import type { DimensionValue } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Bookmark, Check, ChevronLeft } from "lucide-react-native";
+import { Bookmark, Check, ChevronLeft, PencilLine } from "lucide-react-native";
+import { DraftSheet } from "../../components/DraftSheet";
 import { fetchMockDiagnostic } from "../../services/practice";
 import { colors } from "../../theme/colors";
+import type { DraftStroke } from "../../types/draft";
 import type { MockDiagnostic } from "../../types/practice";
 
 const screenWidth = Dimensions.get("window").width;
@@ -13,6 +15,9 @@ export function DiagnosticTestScreen() {
   const [diagnostic, setDiagnostic] = useState<MockDiagnostic | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
+  const [activePageIndex, setActivePageIndex] = useState(0);
+  const [draftVisible, setDraftVisible] = useState(false);
+  const [drafts, setDrafts] = useState<Record<number, DraftStroke[]>>({});
 
   useEffect(() => {
     let isMounted = true;
@@ -49,6 +54,9 @@ export function DiagnosticTestScreen() {
   const progressPercent = (
     diagnostic ? `${(diagnostic.currentIndex / diagnostic.totalCount) * 100}%` : "0%"
   ) as DimensionValue;
+  const activeQuestionId = diagnostic?.questions[activePageIndex]?.id;
+  const activeDraftStrokes = activeQuestionId ? (drafts[activeQuestionId] ?? []) : [];
+  const hasActiveDraft = activeDraftStrokes.length > 0;
 
   return (
     <SafeAreaView className="flex-1 bg-glacier-background">
@@ -64,13 +72,30 @@ export function DiagnosticTestScreen() {
           <Text className="text-lg font-bold text-glacier-textPrimary">
             {progressText}
           </Text>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="收藏本题"
-            className="h-11 w-11 items-center justify-center"
-          >
-            <Bookmark color={colors.textPrimary} size={22} />
-          </Pressable>
+          <View className="flex-row items-center">
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="打开草稿纸"
+              disabled={!activeQuestionId}
+              className={[
+                "relative h-11 w-11 items-center justify-center",
+                activeQuestionId ? "" : "opacity-40"
+              ].join(" ")}
+              onPress={() => setDraftVisible(true)}
+            >
+              <PencilLine color={colors.textPrimary} size={22} />
+              {hasActiveDraft ? (
+                <View className="absolute right-2.5 top-2.5 h-2 w-2 rounded-full bg-glacier-primary" />
+              ) : null}
+            </Pressable>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="收藏本题"
+              className="h-11 w-11 items-center justify-center"
+            >
+              <Bookmark color={colors.textPrimary} size={22} />
+            </Pressable>
+          </View>
         </View>
         <View className="h-[3px] bg-glacier-border">
           <View
@@ -94,6 +119,12 @@ export function DiagnosticTestScreen() {
             decelerationRate="fast"
             contentContainerClassName="items-stretch"
             className="flex-1"
+            onMomentumScrollEnd={(event) => {
+              const nextIndex = Math.round(
+                event.nativeEvent.contentOffset.x / screenWidth
+              );
+              setActivePageIndex(nextIndex);
+            }}
           >
             {diagnostic?.questions.map((item) => (
               <View key={item.id} style={{ width: screenWidth }} className="flex-1">
@@ -163,6 +194,21 @@ export function DiagnosticTestScreen() {
             ))}
           </ScrollView>
         )}
+        <DraftSheet
+          visible={draftVisible}
+          strokes={activeDraftStrokes}
+          onClose={() => setDraftVisible(false)}
+          onChange={(nextStrokes) => {
+            if (!activeQuestionId) {
+              return;
+            }
+
+            setDrafts((currentDrafts) => ({
+              ...currentDrafts,
+              [activeQuestionId]: nextStrokes
+            }));
+          }}
+        />
       </View>
     </SafeAreaView>
   );
