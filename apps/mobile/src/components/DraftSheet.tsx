@@ -22,7 +22,7 @@ type DraftSheetProps = {
 };
 
 const MIN_POINT_DISTANCE = 3;
-const TOOLBAR_HEIGHT = 56;
+const TOOLBAR_HEIGHT = 44;
 
 export function DraftSheet({ onChange, onClose, strokes, visible }: DraftSheetProps) {
   const [currentStroke, setCurrentStroke] = useState<DraftStroke | null>(null);
@@ -105,7 +105,7 @@ export function DraftSheet({ onChange, onClose, strokes, visible }: DraftSheetPr
 
   return (
     <Modal animationType="fade" transparent visible={visible} onRequestClose={onClose}>
-      <View className="flex-1 bg-glacier-card/20">
+      <View className="flex-1 bg-glacier-card/30">
         <View
           className="absolute bottom-0 left-0 right-0"
           style={{ top: canvasTop }}
@@ -134,8 +134,8 @@ export function DraftSheet({ onChange, onClose, strokes, visible }: DraftSheetPr
             paddingTop: insets.top
           }}
         >
-          <View className="h-14 flex-row items-center justify-between">
-            <Text className="text-lg font-extrabold text-glacier-textPrimary">
+          <View className="h-11 flex-row items-center justify-between">
+            <Text className="text-base font-extrabold text-glacier-textPrimary">
               草稿纸
             </Text>
             <View className="flex-row items-center gap-2">
@@ -143,21 +143,21 @@ export function DraftSheet({ onChange, onClose, strokes, visible }: DraftSheetPr
                 label="撤销"
                 disabled={strokes.length === 0}
                 onPress={undoStroke}
-                icon={<RotateCcw color={colors.primary} size={19} />}
+                icon={<RotateCcw color={colors.primary} size={18} />}
               />
               <ToolButton
                 label="清空"
                 disabled={strokes.length === 0}
                 onPress={clearStrokes}
-                icon={<Trash2 color={colors.error} size={19} />}
+                icon={<Trash2 color={colors.error} size={18} />}
               />
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel="关闭草稿纸"
-                className="h-10 w-10 items-center justify-center rounded-full bg-glacier-cardSoft"
+                className="h-9 w-9 items-center justify-center rounded-full bg-glacier-cardSoft"
                 onPress={onClose}
               >
-                <X color={colors.textSecondary} size={21} />
+                <X color={colors.textSecondary} size={20} />
               </Pressable>
             </View>
           </View>
@@ -184,7 +184,7 @@ function ToolButton({
       accessibilityLabel={label}
       disabled={disabled}
       className={[
-        "h-10 w-10 items-center justify-center rounded-full",
+        "h-9 w-9 items-center justify-center rounded-full",
         disabled ? "bg-glacier-cardSoft opacity-50" : "bg-glacier-cardSoft"
       ].join(" ")}
       onPress={onPress}
