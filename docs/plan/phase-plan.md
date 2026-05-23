@@ -2,10 +2,10 @@
 
 ## 当前整体进度
 
-- 当前阶段：阶段 0，仓库初始化与架构规划。
-- 当前状态：进行中。
-- 当前进度：已确定 Monorepo 方向、Python 后端方向、Agent 独立模块方向，并创建初始目录结构。
-- 下一步：初始化具体工程文件、开发环境、基础服务和第一阶段 MVP 计划。
+- 当前阶段：阶段 1.1，FastAPI 后端基础工程。
+- 当前状态：已完成。
+- 当前进度：已完成 FastAPI 应用入口、统一 API 路由、健康检查接口、基础配置、依赖锁定和测试。
+- 下一步：进入阶段 1.2，设计数据库连接、SQLAlchemy 基础模型和 Alembic 迁移配置。
 
 ## 阶段 0：仓库初始化与架构规划
 
@@ -52,6 +52,26 @@
 ### 阶段目标
 
 建立可运行的 FastAPI 后端基础工程，完成用户、题库、练习、答题记录和错题本的基础能力。
+
+### 当前阶段详细计划
+
+- 初始化 `backend/pyproject.toml`，声明 FastAPI 基础依赖、测试依赖和 Ruff 规则。
+- 创建 FastAPI 应用入口 `backend/app/main.py`。
+- 创建配置模块 `backend/app/core/config.py`。
+- 创建统一 API 路由 `backend/app/api/router.py`。
+- 创建健康检查接口 `backend/app/api/v1/health.py`。
+- 为后端包补充必要 `__init__.py`，确保导入路径稳定。
+- 编写健康检查测试 `backend/tests/test_health.py`。
+- 暂不接入 PostgreSQL、Redis、SQLAlchemy 和 Agent 模型调用，避免第一步环境过重。
+
+### 当前阶段详细进度
+
+- 后端基础工程：已完成。
+- 统一 API 路由：已完成。
+- 健康检查接口：已完成。
+- 基础测试：已完成。
+- 数据库与 Agent：后续子阶段处理。
+- 验证结果：`uv run ruff check .` 通过，`uv run pytest` 通过。
 
 ### 主要任务
 
