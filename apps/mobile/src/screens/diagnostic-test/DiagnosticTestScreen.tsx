@@ -90,77 +90,81 @@ export function DiagnosticTestScreen() {
             showsHorizontalScrollIndicator={false}
             decelerationRate="fast"
             contentContainerClassName="items-stretch"
+            className="flex-1"
           >
             {diagnostic?.questions.map((item) => (
-              <ScrollView
+              <View
                 key={item.id}
-                showsVerticalScrollIndicator={false}
                 style={{ width: screenWidth }}
-                contentContainerClassName="gap-3.5 px-5 pb-6"
+                className="flex-1"
               >
-                <View className="mt-4 min-h-[30px] self-start rounded-full bg-glacier-cardSoft px-3">
-                  <Text className="py-1.5 text-[13px] font-extrabold text-glacier-primary">
-                    {item.type}
-                  </Text>
-                </View>
+                <ScrollView
+                  showsVerticalScrollIndicator={false}
+                  className="flex-1"
+                  contentContainerClassName="px-5 pb-6 pt-5"
+                >
+                  <View className="gap-3 rounded-[22px] border border-glacier-border bg-glacier-card p-4">
+                    {item.material.map((paragraph) => (
+                      <Text
+                        key={paragraph}
+                        className="text-[15px] leading-[26px] text-glacier-textPrimary"
+                      >
+                        {paragraph}
+                      </Text>
+                    ))}
+                  </View>
+                </ScrollView>
 
-                <View className="gap-2 rounded-[22px] border border-glacier-border bg-glacier-card p-4">
-                  {item.material.map((paragraph) => (
-                    <Text
-                      key={paragraph}
-                      className="text-sm leading-6 text-glacier-textPrimary"
-                    >
-                      {paragraph}
-                    </Text>
-                  ))}
-                </View>
-
-                <View className="py-1">
+                <View className="border-t border-glacier-border bg-glacier-background px-5 pb-5 pt-4">
                   <Text className="text-lg font-bold leading-7 text-glacier-textPrimary">
                     {item.question}
                   </Text>
-                </View>
 
-                <View className="gap-3">
-                  {item.options.map((option) => {
-                    const selected = option.key === item.selectedAnswer;
+                  <View className="mt-4 gap-3">
+                    {item.options.map((option) => {
+                      const selected = option.key === item.selectedAnswer;
 
-                    return (
-                      <Pressable
-                        key={option.key}
-                        accessibilityRole="button"
-                        accessibilityLabel={`选项 ${option.key}，${option.value}`}
-                        accessibilityState={{ selected }}
-                        className={[
-                          "min-h-[58px] flex-row items-center gap-4 rounded-[18px] border px-4",
-                          selected
-                            ? "border-glacier-primary bg-glacier-soft"
-                            : "border-glacier-border bg-glacier-card"
-                        ].join(" ")}
-                      >
-                        <Text
+                      return (
+                        <Pressable
+                          key={option.key}
+                          accessibilityRole="button"
+                          accessibilityLabel={`选项 ${option.key}，${option.value}`}
+                          accessibilityState={{ selected }}
                           className={[
-                            "text-base font-bold",
+                            "min-h-[58px] flex-row items-center gap-4 rounded-[18px] border px-4",
                             selected
-                              ? "text-glacier-primary"
-                              : "text-glacier-textPrimary"
+                              ? "border-glacier-primary bg-glacier-soft"
+                              : "border-glacier-border bg-glacier-card"
                           ].join(" ")}
                         >
-                          {option.key}
-                        </Text>
-                        <Text className="flex-1 text-base font-medium text-glacier-textPrimary">
-                          {option.value}
-                        </Text>
-                        {selected ? (
-                          <View className="h-6 w-6 items-center justify-center rounded-full bg-glacier-primary">
-                            <Check color={colors.card} size={15} strokeWidth={3} />
-                          </View>
-                        ) : null}
-                      </Pressable>
-                    );
-                  })}
+                          <Text
+                            className={[
+                              "text-base font-bold",
+                              selected
+                                ? "text-glacier-primary"
+                                : "text-glacier-textPrimary"
+                            ].join(" ")}
+                          >
+                            {option.key}
+                          </Text>
+                          <Text className="flex-1 text-base font-medium text-glacier-textPrimary">
+                            {option.value}
+                          </Text>
+                          {selected ? (
+                            <View className="h-6 w-6 items-center justify-center rounded-full bg-glacier-primary">
+                              <Check
+                                color={colors.card}
+                                size={15}
+                                strokeWidth={3}
+                              />
+                            </View>
+                          ) : null}
+                        </Pressable>
+                      );
+                    })}
+                  </View>
                 </View>
-              </ScrollView>
+              </View>
             ))}
           </ScrollView>
         )}
