@@ -16,16 +16,29 @@ import type { DraftPoint, DraftStroke } from "../types/draft";
 type DraftSheetProps = {
   visible: boolean;
   strokes: DraftStroke[];
+  onTwoFingerScroll?: (deltaY: number) => void;
   onChange: (strokes: DraftStroke[]) => void;
   onClose: () => void;
+};
+
+type TouchPoint = {
+  pageY: number;
 };
 
 const MIN_POINT_DISTANCE = 3;
 const TOOLBAR_HEIGHT = 56;
 
-export function DraftSheet({ onChange, onClose, strokes, visible }: DraftSheetProps) {
+export function DraftSheet({
+  onChange,
+  onClose,
+  onTwoFingerScroll,
+  strokes,
+  visible
+}: DraftSheetProps) {
   const [currentStroke, setCurrentStroke] = useState<DraftStroke | null>(null);
   const currentStrokeRef = useRef<DraftStroke | null>(null);
+  const gestureModeRef = useRef<"draw" | "scroll" | null>(null);
+  const lastTwoFingerYRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (!visible) {
@@ -40,6 +53,13 @@ export function DraftSheet({ onChange, onClose, strokes, visible }: DraftSheetPr
         onStartShouldSetPanResponder: () => true,
         onMoveShouldSetPanResponder: () => true,
         onPanResponderGrant: (event) => {
+          if (event.nativeEvent.touches.length >= 2) {
+            gestureModeRef.current = "scroll";
+            lastTwoFingerYRef.current = getTouchCenterY(event.nativeEvent.touches);
+            return;
+          }
+
+          gestureModeRef.current = "draw";
           const point = readPoint(event);
           const nextStroke = {
             id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
@@ -50,6 +70,15 @@ export function DraftSheet({ onChange, onClose, strokes, visible }: DraftSheetPr
           setCurrentStroke(nextStroke);
         },
         onPanResponderMove: (event) => {
+          if (event.nativeEvent.touches.length >= 2) {
+            handleTwoFingerScroll(event.nativeEvent.touches);
+            return;
+          }
+
+          if (gestureModeRef.current !== "draw") {
+            return;
+          }
+
           const stroke = currentStrokeRef.current;
 
           if (!stroke) {
@@ -81,6 +110,20 @@ export function DraftSheet({ onChange, onClose, strokes, visible }: DraftSheetPr
     [strokes]
   );
 
+  function handleTwoFingerScroll(touches: TouchPoint[]) {
+    gestureModeRef.current = "scroll";
+
+    const centerY = getTouchCenterY(touches);
+    const lastCenterY = lastTwoFingerYRef.current;
+    lastTwoFingerYRef.current = centerY;
+
+    if (lastCenterY === null) {
+      return;
+    }
+
+    onTwoFingerScroll?.(lastCenterY - centerY);
+  }
+
   function commitCurrentStroke() {
     const stroke = currentStrokeRef.current;
 
@@ -89,6 +132,8 @@ export function DraftSheet({ onChange, onClose, strokes, visible }: DraftSheetPr
     }
 
     currentStrokeRef.current = null;
+    gestureModeRef.current = null;
+    lastTwoFingerYRef.current = null;
     setCurrentStroke(null);
   }
 
@@ -195,6 +240,11 @@ function readPoint(event: GestureResponderEvent): DraftPoint {
     x: event.nativeEvent.locationX,
     y: event.nativeEvent.locationY
   };
+}
+
+function getTouchCenterY(touches: TouchPoint[]) {
+  const [firstTouch, secondTouch] = touches;
+  return (firstTouch.pageY + secondTouch.pageY) / 2;
 }
 
 function getDistance(start: DraftPoint, end: DraftPoint) {

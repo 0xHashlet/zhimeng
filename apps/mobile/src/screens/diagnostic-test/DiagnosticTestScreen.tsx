@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Dimensions, Pressable, ScrollView, Text, View } from "react-native";
 import type { DimensionValue } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -18,6 +18,8 @@ export function DiagnosticTestScreen() {
   const [activePageIndex, setActivePageIndex] = useState(0);
   const [draftVisible, setDraftVisible] = useState(false);
   const [drafts, setDrafts] = useState<Record<number, DraftStroke[]>>({});
+  const materialScrollRefs = useRef<Record<number, ScrollView | null>>({});
+  const materialScrollOffsets = useRef<Record<number, number>>({});
 
   useEffect(() => {
     let isMounted = true;
@@ -129,9 +131,17 @@ export function DiagnosticTestScreen() {
             {diagnostic?.questions.map((item) => (
               <View key={item.id} style={{ width: screenWidth }} className="flex-1">
                 <ScrollView
+                  ref={(ref) => {
+                    materialScrollRefs.current[item.id] = ref;
+                  }}
                   showsVerticalScrollIndicator={false}
                   className="flex-1"
                   contentContainerClassName="px-5 pb-6 pt-5"
+                  onScroll={(event) => {
+                    materialScrollOffsets.current[item.id] =
+                      event.nativeEvent.contentOffset.y;
+                  }}
+                  scrollEventThrottle={16}
                 >
                   <View className="gap-3 rounded-[22px] border border-glacier-border bg-glacier-card p-4">
                     {item.material.map((paragraph) => (
@@ -198,6 +208,20 @@ export function DiagnosticTestScreen() {
           visible={draftVisible}
           strokes={activeDraftStrokes}
           onClose={() => setDraftVisible(false)}
+          onTwoFingerScroll={(deltaY) => {
+            if (!activeQuestionId) {
+              return;
+            }
+
+            const currentOffset = materialScrollOffsets.current[activeQuestionId] ?? 0;
+            const nextOffset = Math.max(0, currentOffset + deltaY);
+
+            materialScrollOffsets.current[activeQuestionId] = nextOffset;
+            materialScrollRefs.current[activeQuestionId]?.scrollTo({
+              animated: false,
+              y: nextOffset
+            });
+          }}
           onChange={(nextStrokes) => {
             if (!activeQuestionId) {
               return;
