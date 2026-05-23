@@ -6,7 +6,8 @@ import {
   Pressable,
   Text,
   View,
-  type GestureResponderEvent
+  type GestureResponderEvent,
+  type PanResponderGestureState
 } from "react-native";
 import Svg, { Path } from "react-native-svg";
 import { RotateCcw, Trash2, X } from "lucide-react-native";
@@ -55,7 +56,7 @@ export function DraftSheet({
         onPanResponderGrant: (event) => {
           if (event.nativeEvent.touches.length >= 2) {
             gestureModeRef.current = "scroll";
-            lastTwoFingerYRef.current = getTouchCenterY(event.nativeEvent.touches);
+            lastTwoFingerYRef.current = getScrollGestureY(event);
             return;
           }
 
@@ -69,9 +70,9 @@ export function DraftSheet({
           currentStrokeRef.current = nextStroke;
           setCurrentStroke(nextStroke);
         },
-        onPanResponderMove: (event) => {
-          if (event.nativeEvent.touches.length >= 2) {
-            handleTwoFingerScroll(event.nativeEvent.touches);
+        onPanResponderMove: (event, gestureState) => {
+          if (gestureState.numberActiveTouches >= 2) {
+            handleTwoFingerScroll(event, gestureState);
             return;
           }
 
@@ -107,13 +108,18 @@ export function DraftSheet({
           commitCurrentStroke();
         }
       }),
-    [strokes]
+    [onTwoFingerScroll, strokes]
   );
 
-  function handleTwoFingerScroll(touches: TouchPoint[]) {
+  function handleTwoFingerScroll(
+    event: GestureResponderEvent,
+    gestureState: PanResponderGestureState
+  ) {
+    currentStrokeRef.current = null;
+    setCurrentStroke(null);
     gestureModeRef.current = "scroll";
 
-    const centerY = getTouchCenterY(touches);
+    const centerY = getScrollGestureY(event, gestureState);
     const lastCenterY = lastTwoFingerYRef.current;
     lastTwoFingerYRef.current = centerY;
 
@@ -240,6 +246,17 @@ function readPoint(event: GestureResponderEvent): DraftPoint {
     x: event.nativeEvent.locationX,
     y: event.nativeEvent.locationY
   };
+}
+
+function getScrollGestureY(
+  event: GestureResponderEvent,
+  gestureState?: PanResponderGestureState
+) {
+  if (event.nativeEvent.touches.length >= 2) {
+    return getTouchCenterY(event.nativeEvent.touches);
+  }
+
+  return gestureState?.moveY ?? event.nativeEvent.pageY;
 }
 
 function getTouchCenterY(touches: TouchPoint[]) {

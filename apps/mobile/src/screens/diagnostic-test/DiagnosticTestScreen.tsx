@@ -20,6 +20,8 @@ export function DiagnosticTestScreen() {
   const [drafts, setDrafts] = useState<Record<number, DraftStroke[]>>({});
   const materialScrollRefs = useRef<Record<number, ScrollView | null>>({});
   const materialScrollOffsets = useRef<Record<number, number>>({});
+  const materialViewportHeights = useRef<Record<number, number>>({});
+  const materialScrollMaxOffsets = useRef<Record<number, number>>({});
 
   useEffect(() => {
     let isMounted = true;
@@ -141,6 +143,18 @@ export function DiagnosticTestScreen() {
                     materialScrollOffsets.current[item.id] =
                       event.nativeEvent.contentOffset.y;
                   }}
+                  onContentSizeChange={(_, contentHeight) => {
+                    const viewportHeight =
+                      materialViewportHeights.current[item.id] ?? 0;
+                    materialScrollMaxOffsets.current[item.id] = Math.max(
+                      0,
+                      contentHeight - viewportHeight
+                    );
+                  }}
+                  onLayout={(event) => {
+                    materialViewportHeights.current[item.id] =
+                      event.nativeEvent.layout.height;
+                  }}
                   scrollEventThrottle={16}
                 >
                   <View className="gap-3 rounded-[22px] border border-glacier-border bg-glacier-card p-4">
@@ -214,7 +228,8 @@ export function DiagnosticTestScreen() {
             }
 
             const currentOffset = materialScrollOffsets.current[activeQuestionId] ?? 0;
-            const nextOffset = Math.max(0, currentOffset + deltaY);
+            const maxOffset = materialScrollMaxOffsets.current[activeQuestionId];
+            const nextOffset = clampScrollOffset(currentOffset + deltaY, maxOffset);
 
             materialScrollOffsets.current[activeQuestionId] = nextOffset;
             materialScrollRefs.current[activeQuestionId]?.scrollTo({
@@ -236,6 +251,11 @@ export function DiagnosticTestScreen() {
       </View>
     </SafeAreaView>
   );
+}
+
+function clampScrollOffset(offset: number, maxOffset?: number) {
+  const nextOffset = Math.max(0, offset);
+  return typeof maxOffset === "number" ? Math.min(nextOffset, maxOffset) : nextOffset;
 }
 
 function StateCard({ description, title }: { description: string; title: string }) {
