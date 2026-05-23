@@ -4,10 +4,12 @@ import {
   Modal,
   PanResponder,
   Pressable,
+  Text,
   View,
   type GestureResponderEvent
 } from "react-native";
 import Svg, { Path } from "react-native-svg";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { RotateCcw, Trash2, X } from "lucide-react-native";
 import { colors } from "../theme/colors";
 import type { DraftPoint, DraftStroke } from "../types/draft";
@@ -20,10 +22,13 @@ type DraftSheetProps = {
 };
 
 const MIN_POINT_DISTANCE = 3;
+const TOOLBAR_HEIGHT = 56;
 
 export function DraftSheet({ onChange, onClose, strokes, visible }: DraftSheetProps) {
   const [currentStroke, setCurrentStroke] = useState<DraftStroke | null>(null);
   const currentStrokeRef = useRef<DraftStroke | null>(null);
+  const insets = useSafeAreaInsets();
+  const canvasTop = insets.top + TOOLBAR_HEIGHT;
 
   useEffect(() => {
     if (!visible) {
@@ -101,7 +106,11 @@ export function DraftSheet({ onChange, onClose, strokes, visible }: DraftSheetPr
   return (
     <Modal animationType="fade" transparent visible={visible} onRequestClose={onClose}>
       <View className="flex-1 bg-glacier-card/20">
-        <View className="absolute inset-0" {...panResponder.panHandlers}>
+        <View
+          className="absolute bottom-0 left-0 right-0"
+          style={{ top: canvasTop }}
+          {...panResponder.panHandlers}
+        >
           <Svg height="100%" width="100%">
             {[...strokes, ...(currentStroke ? [currentStroke] : [])].map((stroke) => (
               <Path
@@ -118,27 +127,40 @@ export function DraftSheet({ onChange, onClose, strokes, visible }: DraftSheetPr
           </Svg>
         </View>
 
-        <View className="absolute right-4 top-2 flex-row items-center gap-2">
-          <ToolButton
-            label="撤销"
-            disabled={strokes.length === 0}
-            onPress={undoStroke}
-            icon={<RotateCcw color={colors.primary} size={18} />}
-          />
-          <ToolButton
-            label="清空"
-            disabled={strokes.length === 0}
-            onPress={clearStrokes}
-            icon={<Trash2 color={colors.error} size={18} />}
-          />
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="关闭草稿纸"
-            className="h-9 w-9 items-center justify-center rounded-full bg-glacier-card/70"
-            onPress={onClose}
-          >
-            <X color={colors.textSecondary} size={20} />
-          </Pressable>
+        <View
+          className="absolute left-0 right-0 border-b border-glacier-border bg-glacier-background px-5"
+          style={{
+            height: canvasTop,
+            paddingTop: insets.top
+          }}
+        >
+          <View className="h-14 flex-row items-center justify-between">
+            <Text className="text-lg font-extrabold text-glacier-textPrimary">
+              草稿纸
+            </Text>
+            <View className="flex-row items-center gap-2">
+              <ToolButton
+                label="撤销"
+                disabled={strokes.length === 0}
+                onPress={undoStroke}
+                icon={<RotateCcw color={colors.primary} size={19} />}
+              />
+              <ToolButton
+                label="清空"
+                disabled={strokes.length === 0}
+                onPress={clearStrokes}
+                icon={<Trash2 color={colors.error} size={19} />}
+              />
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="关闭草稿纸"
+                className="h-10 w-10 items-center justify-center rounded-full bg-glacier-cardSoft"
+                onPress={onClose}
+              >
+                <X color={colors.textSecondary} size={21} />
+              </Pressable>
+            </View>
+          </View>
         </View>
       </View>
     </Modal>
@@ -162,8 +184,8 @@ function ToolButton({
       accessibilityLabel={label}
       disabled={disabled}
       className={[
-        "h-9 w-9 items-center justify-center rounded-full",
-        disabled ? "bg-glacier-card/50 opacity-50" : "bg-glacier-card/70"
+        "h-10 w-10 items-center justify-center rounded-full",
+        disabled ? "bg-glacier-cardSoft opacity-50" : "bg-glacier-cardSoft"
       ].join(" ")}
       onPress={onPress}
     >
