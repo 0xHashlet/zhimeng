@@ -80,7 +80,10 @@ export function DiagnosticTestScreen() {
         </View>
 
         {isLoading ? (
-          <StateCard title="正在加载题目" description="正在从后端 mock 接口获取诊断题。" />
+          <StateCard
+            title="正在加载题目"
+            description="正在从后端 mock 接口获取诊断题。"
+          />
         ) : errorMessage ? (
           <StateCard title="加载失败" description={errorMessage} />
         ) : (
@@ -93,11 +96,7 @@ export function DiagnosticTestScreen() {
             className="flex-1"
           >
             {diagnostic?.questions.map((item) => (
-              <View
-                key={item.id}
-                style={{ width: screenWidth }}
-                className="flex-1"
-              >
+              <View key={item.id} style={{ width: screenWidth }} className="flex-1">
                 <ScrollView
                   showsVerticalScrollIndicator={false}
                   className="flex-1"
@@ -152,11 +151,7 @@ export function DiagnosticTestScreen() {
                           </Text>
                           {selected ? (
                             <View className="h-6 w-6 items-center justify-center rounded-full bg-glacier-primary">
-                              <Check
-                                color={colors.card}
-                                size={15}
-                                strokeWidth={3}
-                              />
+                              <Check color={colors.card} size={15} strokeWidth={3} />
                             </View>
                           ) : null}
                         </Pressable>
@@ -173,13 +168,7 @@ export function DiagnosticTestScreen() {
   );
 }
 
-function StateCard({
-  description,
-  title
-}: {
-  description: string;
-  title: string;
-}) {
+function StateCard({ description, title }: { description: string; title: string }) {
   return (
     <View className="flex-1 px-5 pt-4">
       <View className="rounded-3xl border border-glacier-border bg-glacier-card p-5">

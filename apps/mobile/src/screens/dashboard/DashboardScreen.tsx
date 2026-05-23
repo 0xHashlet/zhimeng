@@ -181,7 +181,10 @@ export function DashboardScreen() {
 
 function MiniLine({ values }: { values: readonly number[] }) {
   return (
-    <View className="mt-3 h-6 flex-row items-start gap-[3px]" accessibilityLabel="趋势上升">
+    <View
+      className="mt-3 h-6 flex-row items-start gap-[3px]"
+      accessibilityLabel="趋势上升"
+    >
       {values.map((value, index) => (
         <View
           key={`${value}-${index}`}
@@ -198,7 +201,10 @@ function MiniLine({ values }: { values: readonly number[] }) {
 
 function MiniBars({ values }: { values: readonly number[] }) {
   return (
-    <View className="mt-2.5 h-[30px] flex-row items-end gap-[3px]" accessibilityLabel="弱项分布柱状图">
+    <View
+      className="mt-2.5 h-[30px] flex-row items-end gap-[3px]"
+      accessibilityLabel="弱项分布柱状图"
+    >
       {values.map((value, index) => (
         <View
           key={`${value}-${index}`}

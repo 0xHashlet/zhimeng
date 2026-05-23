@@ -1,11 +1,6 @@
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import {
-  Brain,
-  CheckCircle2,
-  ChevronLeft,
-  ChevronRight
-} from "lucide-react-native";
+import { Brain, CheckCircle2, ChevronLeft, ChevronRight } from "lucide-react-native";
 import { colors } from "../../theme/colors";
 
 const tabs = ["待复盘", "慢题", "仍不理解"] as const;
@@ -55,9 +50,7 @@ export function WrongReviewScreen() {
                   <Text
                     className={[
                       "text-sm font-bold",
-                      active
-                        ? "text-glacier-primary"
-                        : "text-glacier-textSecondary"
+                      active ? "text-glacier-primary" : "text-glacier-textSecondary"
                     ].join(" ")}
                   >
                     {tab}

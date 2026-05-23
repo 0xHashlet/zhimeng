@@ -60,9 +60,7 @@ export function AppNavigator() {
         component={DiagnosticIntroScreen}
         options={{
           tabBarLabel: "诊断",
-          tabBarIcon: ({ color, size }) => (
-            <ClipboardList color={color} size={size} />
-          )
+          tabBarIcon: ({ color, size }) => <ClipboardList color={color} size={size} />
         }}
       />
       <Tab.Screen
