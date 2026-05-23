@@ -21,7 +21,7 @@ type DraftSheetProps = {
 };
 
 const MIN_POINT_DISTANCE = 3;
-const TOOLBAR_HEIGHT = 44;
+const TOOLBAR_HEIGHT = 56;
 
 export function DraftSheet({ onChange, onClose, strokes, visible }: DraftSheetProps) {
   const [currentStroke, setCurrentStroke] = useState<DraftStroke | null>(null);
@@ -130,7 +130,7 @@ export function DraftSheet({ onChange, onClose, strokes, visible }: DraftSheetPr
             height: TOOLBAR_HEIGHT
           }}
         >
-          <View className="h-11 flex-row items-center justify-between">
+          <View className="h-14 flex-row items-center justify-between">
             <Text className="text-base font-extrabold text-glacier-textPrimary">
               草稿纸
             </Text>
