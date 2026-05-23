@@ -116,11 +116,59 @@ export function DraftSheet({ onChange, onClose, strokes, visible }: DraftSheetPr
   }
 
   return (
-    <Modal animationType="slide" transparent visible={visible} onRequestClose={onClose}>
-      <View className="flex-1 justify-end bg-black/30">
-        <Pressable className="flex-1" onPress={onClose} />
-        <View className="h-[64%] rounded-t-[28px] border border-glacier-border bg-glacier-card px-4 pb-5 pt-4">
-          <View className="mb-3 flex-row items-center justify-between">
+    <Modal animationType="fade" transparent visible={visible} onRequestClose={onClose}>
+      <View className="flex-1 bg-glacier-card/40">
+        <View
+          className="absolute inset-0"
+          onLayout={(event) => {
+            const { height, width } = event.nativeEvent.layout;
+            setCanvasSize({ height, width });
+          }}
+          {...panResponder.panHandlers}
+        >
+          <Svg height="100%" width="100%">
+            {gridLines.map((line) =>
+              line.direction === "vertical" ? (
+                <Line
+                  key={`v-${line.position}`}
+                  x1={line.position}
+                  y1={0}
+                  x2={line.position}
+                  y2={canvasSize.height}
+                  stroke={colors.border}
+                  strokeOpacity={0.55}
+                  strokeWidth={1}
+                />
+              ) : (
+                <Line
+                  key={`h-${line.position}`}
+                  x1={0}
+                  y1={line.position}
+                  x2={canvasSize.width}
+                  y2={line.position}
+                  stroke={colors.border}
+                  strokeOpacity={0.55}
+                  strokeWidth={1}
+                />
+              )
+            )}
+            {[...strokes, ...(currentStroke ? [currentStroke] : [])].map((stroke) => (
+              <Path
+                key={stroke.id}
+                d={toPath(stroke.points)}
+                fill="none"
+                stroke={colors.textPrimary}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeOpacity={0.88}
+                strokeWidth={3}
+              />
+            ))}
+          </Svg>
+        </View>
+
+        <View className="absolute left-4 right-4 top-12 rounded-2xl border border-glacier-border bg-glacier-card/90 px-3 py-2">
+          <View className="flex-row items-center justify-between">
             <Text className="text-lg font-extrabold text-glacier-textPrimary">
               草稿纸
             </Text>
@@ -147,62 +195,16 @@ export function DraftSheet({ onChange, onClose, strokes, visible }: DraftSheetPr
               </Pressable>
             </View>
           </View>
-
-          <View
-            className="flex-1 overflow-hidden rounded-[22px] border border-glacier-border bg-glacier-cardSoft"
-            onLayout={(event) => {
-              const { height, width } = event.nativeEvent.layout;
-              setCanvasSize({ height, width });
-            }}
-            {...panResponder.panHandlers}
-          >
-            <Svg height="100%" width="100%">
-              {gridLines.map((line) =>
-                line.direction === "vertical" ? (
-                  <Line
-                    key={`v-${line.position}`}
-                    x1={line.position}
-                    y1={0}
-                    x2={line.position}
-                    y2={canvasSize.height}
-                    stroke={colors.border}
-                    strokeWidth={1}
-                  />
-                ) : (
-                  <Line
-                    key={`h-${line.position}`}
-                    x1={0}
-                    y1={line.position}
-                    x2={canvasSize.width}
-                    y2={line.position}
-                    stroke={colors.border}
-                    strokeWidth={1}
-                  />
-                )
-              )}
-              {[...strokes, ...(currentStroke ? [currentStroke] : [])].map((stroke) => (
-                <Path
-                  key={stroke.id}
-                  d={toPath(stroke.points)}
-                  fill="none"
-                  stroke={colors.textPrimary}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={3}
-                />
-              ))}
-            </Svg>
-          </View>
-
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="完成草稿"
-            className="mt-4 min-h-[48px] items-center justify-center rounded-2xl bg-glacier-primary"
-            onPress={onClose}
-          >
-            <Text className="text-base font-extrabold text-glacier-card">完成</Text>
-          </Pressable>
         </View>
+
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="完成草稿"
+          className="absolute bottom-8 left-5 right-5 min-h-[48px] items-center justify-center rounded-2xl bg-glacier-primary/95"
+          onPress={onClose}
+        >
+          <Text className="text-base font-extrabold text-glacier-card">完成</Text>
+        </Pressable>
       </View>
     </Modal>
   );
