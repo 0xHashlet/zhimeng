@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import {
-  Modal,
   PanResponder,
   Pressable,
   Text,
@@ -9,7 +8,7 @@ import {
   type GestureResponderEvent
 } from "react-native";
 import Svg, { Path } from "react-native-svg";
-import { RotateCcw, Trash2, X } from "lucide-react-native";
+import { MoveVertical, PencilLine, RotateCcw, Trash2, X } from "lucide-react-native";
 import { colors } from "../theme/colors";
 import type { DraftPoint, DraftStroke } from "../types/draft";
 
@@ -38,6 +37,7 @@ export function DraftSheet({
   strokes,
   visible
 }: DraftSheetProps) {
+  const [draftMode, setDraftMode] = useState<"draw" | "scroll">("draw");
   const [currentStroke, setCurrentStroke] = useState<DraftStroke | null>(null);
   const currentStrokeRef = useRef<DraftStroke | null>(null);
   const gestureModeRef = useRef<"draw" | "scroll" | null>(null);
@@ -46,6 +46,7 @@ export function DraftSheet({
 
   useEffect(() => {
     if (!visible) {
+      setDraftMode("draw");
       setCurrentStroke(null);
       currentStrokeRef.current = null;
       lastTwoFingerTouchesRef.current = null;
@@ -223,15 +224,33 @@ export function DraftSheet({
     onChange([]);
   }
 
+  function toggleDraftMode() {
+    const nextMode = draftMode === "draw" ? "scroll" : "draw";
+
+    currentStrokeRef.current = null;
+    gestureModeRef.current = null;
+    lastTwoFingerTouchesRef.current = null;
+    pendingFingerDeltasRef.current = [0, 0];
+    setCurrentStroke(null);
+    setDraftMode(nextMode);
+  }
+
+  if (!visible) {
+    return null;
+  }
+
   return (
-    <Modal animationType="fade" transparent visible={visible} onRequestClose={onClose}>
-      <View className="flex-1 bg-glacier-card/40">
+    <View className="absolute inset-0 z-50" pointerEvents="box-none">
+      <View className="absolute inset-0 bg-glacier-card/40" pointerEvents="none" />
+
+      <View className="absolute inset-0" pointerEvents="box-none">
         <View
           className="absolute bottom-0 left-0 right-0"
           style={{ top: TOOLBAR_HEIGHT }}
           onTouchCancel={handleRawTouchEnd}
           onTouchEnd={handleRawTouchEnd}
           onTouchMove={handleRawTouchMove}
+          pointerEvents={draftMode === "draw" ? "auto" : "none"}
           {...panResponder.panHandlers}
         >
           <Svg height="100%" width="100%">
@@ -262,6 +281,19 @@ export function DraftSheet({
             </Text>
             <View className="flex-row items-center gap-2">
               <ToolButton
+                label={draftMode === "draw" ? "切换滚动" : "切换书写"}
+                disabled={false}
+                active={draftMode === "scroll"}
+                onPress={toggleDraftMode}
+                icon={
+                  draftMode === "draw" ? (
+                    <MoveVertical color={colors.textSecondary} size={18} />
+                  ) : (
+                    <PencilLine color={colors.primary} size={18} />
+                  )
+                }
+              />
+              <ToolButton
                 label="撤销"
                 disabled={strokes.length === 0}
                 onPress={undoStroke}
@@ -285,16 +317,18 @@ export function DraftSheet({
           </View>
         </View>
       </View>
-    </Modal>
+    </View>
   );
 }
 
 function ToolButton({
+  active = false,
   disabled,
   icon,
   label,
   onPress
 }: {
+  active?: boolean;
   disabled: boolean;
   icon: ReactNode;
   label: string;
@@ -307,7 +341,8 @@ function ToolButton({
       disabled={disabled}
       className={[
         "h-9 w-9 items-center justify-center rounded-full",
-        disabled ? "bg-glacier-cardSoft opacity-50" : "bg-glacier-cardSoft"
+        active ? "bg-glacier-soft" : "bg-glacier-cardSoft",
+        disabled ? "opacity-50" : ""
       ].join(" ")}
       onPress={onPress}
     >
