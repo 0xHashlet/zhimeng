@@ -34,20 +34,31 @@ const screenHeight = Dimensions.get("window").height;
 const questionPanelCollapsedHeight = 156;
 const questionPanelExpandedHeight = Math.min(screenHeight * 0.58, 440);
 const questionPanelBottomGap = 32;
-const draftBoundaryOverlap = 8;
-const topChromeHeight = 57;
-const materialHorizontalInset = 22;
-const materialTopInset = 21;
 
 type DraftLayer = "material" | "question";
 
 type QuestionDrafts = Record<DraftLayer, DraftStroke[]>;
 
 type ActiveDraftStroke = {
-  layer: DraftLayer;
-  lastPoint: DraftPoint;
   pointCount: number;
   strokeId: string;
+};
+
+type DraftLayoutSnapshot = {
+  materialContentX: number;
+  materialContentY: number;
+  materialScrollY: number;
+  pageTop: number;
+  questionPanelTop: number;
+};
+
+type DraftSessionPoint = DraftPoint & {
+  snapshot: DraftLayoutSnapshot;
+};
+
+type DraftSessionStroke = {
+  id: string;
+  points: DraftSessionPoint[];
 };
 
 function createEmptyQuestionDrafts(): QuestionDrafts {
@@ -65,6 +76,9 @@ export function DiagnosticTestScreen() {
   const [activePageIndex, setActivePageIndex] = useState(0);
   const [draftVisible, setDraftVisible] = useState(false);
   const [drafts, setDrafts] = useState<Record<number, QuestionDrafts>>({});
+  const [draftSessionStrokes, setDraftSessionStrokes] = useState<
+    Record<number, DraftStroke[]>
+  >({});
   const [draftStrokeHistory, setDraftStrokeHistory] = useState<
     Record<number, DraftLayer[]>
   >({});
@@ -72,8 +86,19 @@ export function DiagnosticTestScreen() {
     questionPanelExpandedHeight + questionPanelBottomGap
   );
   const [contentHeight, setContentHeight] = useState(screenHeight);
+  const [pageTop, setPageTop] = useState(0);
+  const draftSessionStrokesRef = useRef<Record<number, DraftSessionStroke[]>>({});
   const materialScrollRefs = useRef<Record<number, ScrollView | null>>({});
   const materialScrollOffsets = useRef<Record<number, number>>({});
+  const materialContentFrames = useRef<
+    Record<
+      number,
+      {
+        x: number;
+        y: number;
+      }
+    >
+  >({});
   const materialViewportHeights = useRef<Record<number, number>>({});
   const materialScrollMaxOffsets = useRef<Record<number, number>>({});
   const questionScrollRefs = useRef<Record<number, ScrollView | null>>({});
@@ -190,11 +215,31 @@ export function DiagnosticTestScreen() {
   const activeDrafts = activeQuestionId
     ? (drafts[activeQuestionId] ?? createEmptyQuestionDrafts())
     : createEmptyQuestionDrafts();
+  const activeDraftSessionStrokes = activeQuestionId
+    ? (draftSessionStrokes[activeQuestionId] ?? [])
+    : [];
   const hasActiveDraft =
-    activeDrafts.material.length > 0 || activeDrafts.question.length > 0;
+    activeDrafts.material.length > 0 ||
+    activeDrafts.question.length > 0 ||
+    activeDraftSessionStrokes.length > 0;
 
   function undoDraftStroke() {
     if (!activeQuestionId) {
+      return;
+    }
+
+    const sessionStrokes = draftSessionStrokesRef.current[activeQuestionId] ?? [];
+
+    if (sessionStrokes.length > 0) {
+      const nextSessionStrokes = sessionStrokes.slice(0, -1);
+      draftSessionStrokesRef.current = {
+        ...draftSessionStrokesRef.current,
+        [activeQuestionId]: nextSessionStrokes
+      };
+      setDraftSessionStrokes((currentStrokes) => ({
+        ...currentStrokes,
+        [activeQuestionId]: toRenderableSessionStrokes(nextSessionStrokes)
+      }));
       return;
     }
 
@@ -226,6 +271,14 @@ export function DiagnosticTestScreen() {
     setDrafts((currentDrafts) => ({
       ...currentDrafts,
       [activeQuestionId]: createEmptyQuestionDrafts()
+    }));
+    draftSessionStrokesRef.current = {
+      ...draftSessionStrokesRef.current,
+      [activeQuestionId]: []
+    };
+    setDraftSessionStrokes((currentStrokes) => ({
+      ...currentStrokes,
+      [activeQuestionId]: []
     }));
     setDraftStrokeHistory((currentHistory) => ({
       ...currentHistory,
@@ -262,21 +315,28 @@ export function DiagnosticTestScreen() {
       return;
     }
 
-    const layer = getScreenPointLayer(point);
-    const strokeId = createDraftStrokeId(layer);
-    const layerPoint = convertScreenPointToLayerPoint(point, layer);
+    const strokeId = createDraftStrokeId("session");
+    const sessionPoint = createSessionPoint(activeQuestionId, point);
+    const nextSessionStrokes = [
+      ...(draftSessionStrokesRef.current[activeQuestionId] ?? []),
+      {
+        id: strokeId,
+        points: [sessionPoint]
+      }
+    ];
 
     activeDraftStrokeRef.current = {
-      layer,
-      lastPoint: point,
       pointCount: 1,
       strokeId
     };
-    addDraftStroke(activeQuestionId, layer, {
-      id: strokeId,
-      points: [layerPoint]
-    });
-    recordDraftStroke(activeQuestionId, layer);
+    draftSessionStrokesRef.current = {
+      ...draftSessionStrokesRef.current,
+      [activeQuestionId]: nextSessionStrokes
+    };
+    setDraftSessionStrokes((currentStrokes) => ({
+      ...currentStrokes,
+      [activeQuestionId]: toRenderableSessionStrokes(nextSessionStrokes)
+    }));
   }
 
   function handleDraftMove(point: DraftPoint) {
@@ -285,56 +345,29 @@ export function DiagnosticTestScreen() {
     }
 
     const currentStroke = activeDraftStrokeRef.current;
-    const layer = getScreenPointLayer(point);
-
-    if (layer === currentStroke.layer) {
-      appendDraftPoint(
-        activeQuestionId,
-        layer,
-        currentStroke.strokeId,
-        convertScreenPointToLayerPoint(point, layer)
-      );
-      activeDraftStrokeRef.current = {
-        ...currentStroke,
-        lastPoint: point,
-        pointCount: currentStroke.pointCount + 1
-      };
-      return;
-    }
-
-    const nextStrokeId = createDraftStrokeId(layer);
-    const boundaryPoint = getLayerBoundaryPoint(currentStroke.lastPoint, point);
-    const currentLayerExitPoint = getLayerBoundaryPoint(
-      currentStroke.lastPoint,
-      point,
-      currentStroke.layer === "material" ? draftBoundaryOverlap : -draftBoundaryOverlap
-    );
-    const nextLayerEntryPoint = getLayerBoundaryPoint(
-      currentStroke.lastPoint,
-      point,
-      layer === "material" ? -draftBoundaryOverlap : draftBoundaryOverlap
+    const sessionPoint = createSessionPoint(activeQuestionId, point);
+    const nextSessionStrokes = (
+      draftSessionStrokesRef.current[activeQuestionId] ?? []
+    ).map((stroke) =>
+      stroke.id === currentStroke.strokeId
+        ? {
+            ...stroke,
+            points: [...stroke.points, sessionPoint]
+          }
+        : stroke
     );
 
-    appendDraftPoint(
-      activeQuestionId,
-      currentStroke.layer,
-      currentStroke.strokeId,
-      convertScreenPointToLayerPoint(currentLayerExitPoint, currentStroke.layer)
-    );
-    addDraftStroke(activeQuestionId, layer, {
-      id: nextStrokeId,
-      points: [
-        convertScreenPointToLayerPoint(nextLayerEntryPoint, layer),
-        convertScreenPointToLayerPoint(boundaryPoint, layer),
-        convertScreenPointToLayerPoint(point, layer)
-      ]
-    });
-    recordDraftStroke(activeQuestionId, layer);
+    draftSessionStrokesRef.current = {
+      ...draftSessionStrokesRef.current,
+      [activeQuestionId]: nextSessionStrokes
+    };
+    setDraftSessionStrokes((currentStrokes) => ({
+      ...currentStrokes,
+      [activeQuestionId]: toRenderableSessionStrokes(nextSessionStrokes)
+    }));
     activeDraftStrokeRef.current = {
-      layer,
-      lastPoint: point,
-      pointCount: 2,
-      strokeId: nextStrokeId
+      ...currentStroke,
+      pointCount: currentStroke.pointCount + 1
     };
   }
 
@@ -344,18 +377,16 @@ export function DiagnosticTestScreen() {
       activeDraftStrokeRef.current &&
       activeDraftStrokeRef.current.pointCount <= 1
     ) {
-      const { layer } = activeDraftStrokeRef.current;
+      const sessionStrokes = draftSessionStrokesRef.current[activeQuestionId] ?? [];
+      const nextSessionStrokes = sessionStrokes.slice(0, -1);
 
-      setDrafts((currentDrafts) => ({
-        ...currentDrafts,
-        [activeQuestionId]: removeLastLayerStroke(
-          currentDrafts[activeQuestionId] ?? createEmptyQuestionDrafts(),
-          layer
-        )
-      }));
-      setDraftStrokeHistory((currentHistory) => ({
-        ...currentHistory,
-        [activeQuestionId]: (currentHistory[activeQuestionId] ?? []).slice(0, -1)
+      draftSessionStrokesRef.current = {
+        ...draftSessionStrokesRef.current,
+        [activeQuestionId]: nextSessionStrokes
+      };
+      setDraftSessionStrokes((currentStrokes) => ({
+        ...currentStrokes,
+        [activeQuestionId]: toRenderableSessionStrokes(nextSessionStrokes)
       }));
     }
 
@@ -363,6 +394,10 @@ export function DiagnosticTestScreen() {
   }
 
   function closeDraftMode() {
+    if (activeQuestionId) {
+      commitDraftSession(activeQuestionId);
+    }
+
     activeDraftStrokeRef.current = null;
     setDraftVisible(false);
   }
@@ -386,102 +421,141 @@ export function DiagnosticTestScreen() {
     setContentHeight(event.nativeEvent.layout.height);
   }
 
-  function getScreenPointLayer(point: { x: number; y: number }): DraftLayer {
-    const questionPanelTop = contentHeight - questionPanelHeightValue;
-    return point.y >= questionPanelTop ? "question" : "material";
+  function handlePageLayout(event: LayoutChangeEvent) {
+    setPageTop(event.nativeEvent.layout.y);
   }
 
-  function getLayerBoundaryPoint(
-    startPoint: DraftPoint,
-    endPoint: DraftPoint,
-    offsetY = 0
-  ) {
-    const questionPanelTop = contentHeight - questionPanelHeightValue;
+  function createSessionPoint(
+    questionId: number,
+    point: DraftPoint
+  ): DraftSessionPoint {
+    const materialContentFrame = materialContentFrames.current[questionId] ?? {
+      x: 0,
+      y: 0
+    };
+
+    return {
+      ...point,
+      snapshot: {
+        materialContentX: materialContentFrame.x,
+        materialContentY: materialContentFrame.y,
+        materialScrollY: materialScrollOffsets.current[questionId] ?? 0,
+        pageTop,
+        questionPanelTop: contentHeight - questionPanelHeightValue
+      }
+    };
+  }
+
+  function commitDraftSession(questionId: number) {
+    const sessionStrokes = draftSessionStrokesRef.current[questionId] ?? [];
+
+    if (sessionStrokes.length === 0) {
+      return;
+    }
+
+    const nextDrafts = sessionStrokes.reduce(
+      (mergedDrafts, stroke) =>
+        mergeQuestionDrafts(mergedDrafts, splitSessionStroke(stroke)),
+      createEmptyQuestionDrafts()
+    );
+
+    setDrafts((currentDrafts) => ({
+      ...currentDrafts,
+      [questionId]: mergeQuestionDrafts(
+        currentDrafts[questionId] ?? createEmptyQuestionDrafts(),
+        nextDrafts
+      )
+    }));
+    setDraftStrokeHistory((currentHistory) => ({
+      ...currentHistory,
+      [questionId]: [
+        ...(currentHistory[questionId] ?? []),
+        ...nextDrafts.material.map(() => "material" as DraftLayer),
+        ...nextDrafts.question.map(() => "question" as DraftLayer)
+      ]
+    }));
+    draftSessionStrokesRef.current = {
+      ...draftSessionStrokesRef.current,
+      [questionId]: []
+    };
+    setDraftSessionStrokes((currentStrokes) => ({
+      ...currentStrokes,
+      [questionId]: []
+    }));
+  }
+
+  function splitSessionStroke(stroke: DraftSessionStroke): QuestionDrafts {
+    const layerPoints: Record<DraftLayer, DraftPoint[]> = {
+      material: [],
+      question: []
+    };
+    let previousPoint: DraftSessionPoint | null = null;
+    let previousLayer: DraftLayer | null = null;
+
+    stroke.points.forEach((point) => {
+      const layer = getSessionPointLayer(point);
+
+      if (previousPoint && previousLayer && previousLayer !== layer) {
+        const boundaryPoint = getSessionBoundaryPoint(previousPoint, point);
+        layerPoints[previousLayer].push(
+          convertSessionPointToLayerPoint(boundaryPoint, previousLayer)
+        );
+        layerPoints[layer].push(convertSessionPointToLayerPoint(boundaryPoint, layer));
+      }
+
+      layerPoints[layer].push(convertSessionPointToLayerPoint(point, layer));
+      previousPoint = point;
+      previousLayer = layer;
+    });
+
+    return {
+      material: createLayerStrokes(stroke.id, "material", layerPoints.material),
+      question: createLayerStrokes(stroke.id, "question", layerPoints.question)
+    };
+  }
+
+  function getSessionPointLayer(point: DraftSessionPoint): DraftLayer {
+    return point.y >= point.snapshot.questionPanelTop ? "question" : "material";
+  }
+
+  function getSessionBoundaryPoint(
+    startPoint: DraftSessionPoint,
+    endPoint: DraftSessionPoint
+  ): DraftSessionPoint {
     const distanceY = endPoint.y - startPoint.y;
 
     if (distanceY === 0) {
       return endPoint;
     }
 
-    const progress = (questionPanelTop - startPoint.y) / distanceY;
+    const progress = (startPoint.snapshot.questionPanelTop - startPoint.y) / distanceY;
     const clampedProgress = Math.min(1, Math.max(0, progress));
 
     return {
       x: startPoint.x + (endPoint.x - startPoint.x) * clampedProgress,
-      y: questionPanelTop + offsetY
+      y: startPoint.snapshot.questionPanelTop,
+      snapshot: startPoint.snapshot
     };
   }
 
-  function addDraftStroke(questionId: number, layer: DraftLayer, stroke: DraftStroke) {
-    setDrafts((currentDrafts) => {
-      const questionDrafts = currentDrafts[questionId] ?? createEmptyQuestionDrafts();
-
-      return {
-        ...currentDrafts,
-        [questionId]: {
-          ...questionDrafts,
-          [layer]: [...questionDrafts[layer], stroke]
-        }
-      };
-    });
-  }
-
-  function appendDraftPoint(
-    questionId: number,
-    layer: DraftLayer,
-    strokeId: string,
-    point: DraftPoint
-  ) {
-    setDrafts((currentDrafts) => {
-      const questionDrafts = currentDrafts[questionId] ?? createEmptyQuestionDrafts();
-
-      return {
-        ...currentDrafts,
-        [questionId]: {
-          ...questionDrafts,
-          [layer]: questionDrafts[layer].map((stroke) =>
-            stroke.id === strokeId
-              ? {
-                  ...stroke,
-                  points: [...stroke.points, point]
-                }
-              : stroke
-          )
-        }
-      };
-    });
-  }
-
-  function recordDraftStroke(questionId: number, layer: DraftLayer) {
-    setDraftStrokeHistory((currentHistory) => ({
-      ...currentHistory,
-      [questionId]: [...(currentHistory[questionId] ?? []), layer]
-    }));
-  }
-
-  function convertScreenPointToLayerPoint(
-    point: {
-      x: number;
-      y: number;
-    },
+  function convertSessionPointToLayerPoint(
+    point: DraftSessionPoint,
     layer: DraftLayer
   ): DraftPoint {
-    const questionPanelTop = contentHeight - questionPanelHeightValue;
-
     if (layer === "question") {
       return {
         x: point.x,
-        y: point.y - questionPanelTop
+        y: point.y - point.snapshot.questionPanelTop
       };
     }
 
     return {
-      x: point.x - materialHorizontalInset,
+      x: point.x - point.snapshot.materialContentX,
       y:
         point.y -
-        topChromeHeight -
-        materialTopInset +
-        (materialScrollOffsets.current[activeQuestionId ?? 0] ?? 0)
+        point.snapshot.pageTop -
+        point.snapshot.materialContentY +
+        point.snapshot.materialScrollY
     };
   }
 
@@ -548,6 +622,7 @@ export function DiagnosticTestScreen() {
             decelerationRate="fast"
             contentContainerClassName="items-stretch"
             className="flex-1"
+            onLayout={handlePageLayout}
             onMomentumScrollEnd={(event) => {
               const nextIndex = Math.round(
                 event.nativeEvent.contentOffset.x / screenWidth
@@ -586,7 +661,15 @@ export function DiagnosticTestScreen() {
                   }}
                   scrollEventThrottle={16}
                 >
-                  <View className="relative gap-4 px-0.5 py-1">
+                  <View
+                    className="relative gap-4 px-0.5 py-1"
+                    onLayout={(event) => {
+                      materialContentFrames.current[item.id] = {
+                        x: event.nativeEvent.layout.x,
+                        y: event.nativeEvent.layout.y
+                      };
+                    }}
+                  >
                     {item.material.map((paragraph) => (
                       <Text
                         key={paragraph}
@@ -713,7 +796,7 @@ export function DiagnosticTestScreen() {
         <DraftCanvas
           enabled={draftVisible}
           inputOnly
-          strokes={[]}
+          strokes={activeDraftSessionStrokes}
           onDrawEnd={handleDraftEnd}
           onDrawMove={handleDraftMove}
           onDrawStart={handleDraftStart}
@@ -769,8 +852,41 @@ function clampScrollOffset(offset: number, maxOffset?: number) {
   return typeof maxOffset === "number" ? Math.min(nextOffset, maxOffset) : nextOffset;
 }
 
-function createDraftStrokeId(layer: DraftLayer) {
+function createDraftStrokeId(layer: DraftLayer | "session") {
   return `${Date.now()}-${layer}-${Math.random().toString(36).slice(2)}`;
+}
+
+function createLayerStrokes(strokeId: string, layer: DraftLayer, points: DraftPoint[]) {
+  if (points.length <= 1) {
+    return [];
+  }
+
+  return [
+    {
+      id: `${strokeId}-${layer}-${Math.random().toString(36).slice(2)}`,
+      points
+    }
+  ];
+}
+
+function mergeQuestionDrafts(
+  currentDrafts: QuestionDrafts,
+  nextDrafts: QuestionDrafts
+) {
+  return {
+    material: [...currentDrafts.material, ...nextDrafts.material],
+    question: [...currentDrafts.question, ...nextDrafts.question]
+  };
+}
+
+function toRenderableSessionStrokes(strokes: DraftSessionStroke[]): DraftStroke[] {
+  return strokes.map((stroke) => ({
+    id: stroke.id,
+    points: stroke.points.map(({ x, y }) => ({
+      x,
+      y
+    }))
+  }));
 }
 
 function removeLastLayerStroke(currentDrafts: QuestionDrafts, layer: DraftLayer) {
