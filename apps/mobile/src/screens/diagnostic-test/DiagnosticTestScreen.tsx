@@ -720,12 +720,7 @@ export function DiagnosticTestScreen() {
                 </ScrollView>
 
                 <Animated.View
-                  className={[
-                    "absolute bottom-0 left-0 right-0 overflow-hidden border-t bg-glacier-background",
-                    draftVisible && item.id === activeQuestionId
-                      ? "border-transparent"
-                      : "border-glacier-border"
-                  ].join(" ")}
+                  className="absolute bottom-0 left-0 right-0 overflow-hidden bg-glacier-background"
                   style={{ height: questionPanelHeight }}
                 >
                   <View
