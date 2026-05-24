@@ -34,7 +34,7 @@ const screenHeight = Dimensions.get("window").height;
 const questionPanelCollapsedHeight = 156;
 const questionPanelExpandedHeight = Math.min(screenHeight * 0.58, 440);
 const questionPanelBottomGap = 32;
-const draftBoundaryOverlap = 4;
+const draftBoundaryOverlap = 8;
 const topChromeHeight = 57;
 const materialHorizontalInset = 22;
 const materialTopInset = 21;
@@ -312,7 +312,7 @@ export function DiagnosticTestScreen() {
     const nextLayerEntryPoint = getLayerBoundaryPoint(
       currentStroke.lastPoint,
       point,
-      layer === "material" ? draftBoundaryOverlap : -draftBoundaryOverlap
+      layer === "material" ? -draftBoundaryOverlap : draftBoundaryOverlap
     );
 
     appendDraftPoint(
