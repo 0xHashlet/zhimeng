@@ -1,3 +1,5 @@
+import { useNavigation } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
@@ -11,6 +13,7 @@ import {
   Timer,
   TrendingUp
 } from "lucide-react-native";
+import type { RootStackParamList } from "../../navigation/AppNavigator";
 import { colors } from "../../theme/colors";
 
 const metricCards = [
@@ -53,6 +56,8 @@ const actionItems = [
 ] as const;
 
 export function DashboardScreen() {
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+
   return (
     <SafeAreaView className="flex-1 bg-glacier-background">
       <ScrollView
@@ -113,7 +118,7 @@ export function DashboardScreen() {
         </View>
 
         <View className="overflow-hidden rounded-[22px] border border-glacier-border bg-glacier-card">
-          {actionItems.map((item) => {
+          {actionItems.map((item, index) => {
             const Icon = item.icon;
 
             return (
@@ -122,6 +127,9 @@ export function DashboardScreen() {
                 accessibilityRole="button"
                 accessibilityLabel={item.title}
                 className="min-h-[72px] flex-row items-center gap-3 border-b border-glacier-border px-3.5"
+                onPress={
+                  index === 0 ? () => navigation.navigate("DiagnosticTest") : undefined
+                }
               >
                 <View className="h-10 w-10 items-center justify-center rounded-[10px] bg-glacier-primary">
                   <Icon color={colors.card} size={20} />

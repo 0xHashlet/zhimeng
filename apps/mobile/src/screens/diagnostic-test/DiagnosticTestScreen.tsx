@@ -1,9 +1,12 @@
+import { useNavigation } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useEffect, useRef, useState } from "react";
 import { Dimensions, Pressable, ScrollView, Text, View } from "react-native";
 import type { DimensionValue } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Bookmark, Check, ChevronLeft, PencilLine } from "lucide-react-native";
 import { DraftSheet } from "../../components/DraftSheet";
+import type { RootStackParamList } from "../../navigation/AppNavigator";
 import { fetchMockDiagnostic } from "../../services/practice";
 import { colors } from "../../theme/colors";
 import type { DraftStroke } from "../../types/draft";
@@ -12,6 +15,7 @@ import type { MockDiagnostic } from "../../types/practice";
 const screenWidth = Dimensions.get("window").width;
 
 export function DiagnosticTestScreen() {
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const [diagnostic, setDiagnostic] = useState<MockDiagnostic | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
@@ -70,6 +74,7 @@ export function DiagnosticTestScreen() {
             accessibilityRole="button"
             accessibilityLabel="返回上一页"
             className="h-11 w-11 items-center justify-center"
+            onPress={() => navigation.goBack()}
           >
             <ChevronLeft color={colors.textPrimary} size={24} />
           </Pressable>

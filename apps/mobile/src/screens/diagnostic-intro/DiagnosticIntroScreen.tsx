@@ -1,6 +1,9 @@
+import { useNavigation } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Check, Clock3 } from "lucide-react-native";
+import type { RootStackParamList } from "../../navigation/AppNavigator";
 import { colors } from "../../theme/colors";
 
 const introItems = [
@@ -11,6 +14,8 @@ const introItems = [
 ] as const;
 
 export function DiagnosticIntroScreen() {
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+
   return (
     <SafeAreaView className="flex-1 bg-glacier-background">
       <View className="flex-1 px-[22px] pb-7 pt-11">
@@ -47,6 +52,7 @@ export function DiagnosticIntroScreen() {
           accessibilityRole="button"
           accessibilityLabel="开始测试"
           className="mt-6 min-h-[58px] items-center justify-center rounded-2xl bg-glacier-primary"
+          onPress={() => navigation.navigate("DiagnosticTest")}
         >
           <Text className="text-lg font-bold text-glacier-card">开始测试</Text>
         </Pressable>

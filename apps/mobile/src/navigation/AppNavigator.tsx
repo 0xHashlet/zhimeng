@@ -1,11 +1,6 @@
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import {
-  BarChart3,
-  ClipboardList,
-  FileText,
-  Home,
-  RotateCcw
-} from "lucide-react-native";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import { BarChart3, ClipboardList, Home, RotateCcw } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { DashboardScreen } from "../screens/dashboard/DashboardScreen";
 import { DiagnosticIntroScreen } from "../screens/diagnostic-intro/DiagnosticIntroScreen";
@@ -14,17 +9,31 @@ import { DiagnosticTestScreen } from "../screens/diagnostic-test/DiagnosticTestS
 import { WrongReviewScreen } from "../screens/wrong-review/WrongReviewScreen";
 import { colors } from "../theme/colors";
 
-export type RootTabParamList = {
+export type RootStackParamList = {
+  MainTabs: undefined;
+  DiagnosticTest: undefined;
+};
+
+export type MainTabParamList = {
   Dashboard: undefined;
   DiagnosticIntro: undefined;
-  DiagnosticTest: undefined;
   DiagnosticReport: undefined;
   WrongReview: undefined;
 };
 
-const Tab = createBottomTabNavigator<RootTabParamList>();
+const Stack = createNativeStackNavigator<RootStackParamList>();
+const Tab = createBottomTabNavigator<MainTabParamList>();
 
 export function AppNavigator() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="MainTabs" component={MainTabsNavigator} />
+      <Stack.Screen name="DiagnosticTest" component={DiagnosticTestScreen} />
+    </Stack.Navigator>
+  );
+}
+
+function MainTabsNavigator() {
   const insets = useSafeAreaInsets();
   const bottomInset = Math.max(insets.bottom, 18);
 
@@ -61,14 +70,6 @@ export function AppNavigator() {
         options={{
           tabBarLabel: "诊断",
           tabBarIcon: ({ color, size }) => <ClipboardList color={color} size={size} />
-        }}
-      />
-      <Tab.Screen
-        name="DiagnosticTest"
-        component={DiagnosticTestScreen}
-        options={{
-          tabBarLabel: "做题",
-          tabBarIcon: ({ color, size }) => <FileText color={color} size={size} />
         }}
       />
       <Tab.Screen
