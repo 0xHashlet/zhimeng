@@ -22,11 +22,13 @@ type DraftSheetProps = {
 };
 
 type TouchPoint = {
+  identifier?: string | number;
   pageY: number;
 };
 
 const MIN_POINT_DISTANCE = 3;
 const MIN_SCROLL_DELTA = 2;
+const MIN_FINGER_SCROLL_DELTA = 1;
 const TOOLBAR_HEIGHT = 56;
 
 export function DraftSheet({
@@ -39,21 +41,14 @@ export function DraftSheet({
   const [currentStroke, setCurrentStroke] = useState<DraftStroke | null>(null);
   const currentStrokeRef = useRef<DraftStroke | null>(null);
   const gestureModeRef = useRef<"draw" | "scroll" | null>(null);
-  const lastTouchMoveYRef = useRef<number | null>(null);
-  const pendingScrollDeltaRef = useRef(0);
-  const scrollFrameRef = useRef<number | null>(null);
+  const lastTwoFingerTouchesRef = useRef<TouchPoint[] | null>(null);
 
   useEffect(() => {
     if (!visible) {
       setCurrentStroke(null);
       currentStrokeRef.current = null;
-      lastTouchMoveYRef.current = null;
-      pendingScrollDeltaRef.current = 0;
-
-      if (scrollFrameRef.current !== null) {
-        cancelAnimationFrame(scrollFrameRef.current);
-        scrollFrameRef.current = null;
-      }
+      lastTwoFingerTouchesRef.current = null;
+      gestureModeRef.current = null;
     }
   }, [visible]);
 
@@ -63,6 +58,10 @@ export function DraftSheet({
         onStartShouldSetPanResponder: () => true,
         onMoveShouldSetPanResponder: () => true,
         onPanResponderGrant: (event) => {
+          if (gestureModeRef.current === "scroll") {
+            return;
+          }
+
           if (event.nativeEvent.touches.length >= 2) {
             gestureModeRef.current = "scroll";
             return;
@@ -79,10 +78,12 @@ export function DraftSheet({
           setCurrentStroke(nextStroke);
         },
         onPanResponderMove: (event, gestureState) => {
+          if (gestureModeRef.current === "scroll") {
+            return;
+          }
+
           if (gestureState.numberActiveTouches >= 2) {
-            currentStrokeRef.current = null;
-            setCurrentStroke(null);
-            gestureModeRef.current = "scroll";
+            enterScrollMode();
             return;
           }
 
@@ -111,7 +112,14 @@ export function DraftSheet({
           currentStrokeRef.current = nextStroke;
           setCurrentStroke(nextStroke);
         },
-        onPanResponderRelease: () => {
+        onPanResponderRelease: (event) => {
+          if (
+            gestureModeRef.current === "scroll" &&
+            event.nativeEvent.touches.length > 0
+          ) {
+            return;
+          }
+
           commitCurrentStroke();
         },
         onPanResponderTerminate: () => {
@@ -125,49 +133,60 @@ export function DraftSheet({
     const touches = event.nativeEvent.touches;
 
     if (touches.length < 2) {
-      lastTouchMoveYRef.current = null;
+      lastTwoFingerTouchesRef.current = null;
+      return;
+    }
+
+    enterScrollMode();
+
+    const currentTouches = touches.slice(0, 2);
+    const lastTouches = lastTwoFingerTouchesRef.current;
+    lastTwoFingerTouchesRef.current = currentTouches;
+
+    if (!lastTouches) {
+      return;
+    }
+
+    const firstDeltaY = getFingerDeltaY(currentTouches[0], lastTouches, 0);
+    const secondDeltaY = getFingerDeltaY(currentTouches[1], lastTouches, 1);
+
+    if (firstDeltaY === null || secondDeltaY === null) {
+      return;
+    }
+
+    if (
+      Math.abs(firstDeltaY) < MIN_FINGER_SCROLL_DELTA ||
+      Math.abs(secondDeltaY) < MIN_FINGER_SCROLL_DELTA ||
+      Math.sign(firstDeltaY) !== Math.sign(secondDeltaY)
+    ) {
+      return;
+    }
+
+    const deltaY = (firstDeltaY + secondDeltaY) / 2;
+
+    if (Math.abs(deltaY) < MIN_SCROLL_DELTA) {
+      return;
+    }
+
+    onTwoFingerScroll?.(deltaY);
+  }
+
+  function handleRawTouchEnd(event: GestureResponderEvent) {
+    lastTwoFingerTouchesRef.current = null;
+
+    if (event.nativeEvent.touches.length === 0) {
+      gestureModeRef.current = null;
+    }
+  }
+
+  function enterScrollMode() {
+    if (gestureModeRef.current === "scroll") {
       return;
     }
 
     currentStrokeRef.current = null;
     setCurrentStroke(null);
     gestureModeRef.current = "scroll";
-
-    const centerY = getTouchCenterY(touches);
-    const lastCenterY = lastTouchMoveYRef.current;
-    lastTouchMoveYRef.current = centerY;
-
-    if (lastCenterY === null) {
-      return;
-    }
-
-    const deltaY = lastCenterY - centerY;
-
-    if (Math.abs(deltaY) < MIN_SCROLL_DELTA) {
-      return;
-    }
-
-    scheduleTwoFingerScroll(deltaY);
-  }
-
-  function scheduleTwoFingerScroll(deltaY: number) {
-    pendingScrollDeltaRef.current += deltaY;
-
-    if (scrollFrameRef.current !== null) {
-      return;
-    }
-
-    scrollFrameRef.current = requestAnimationFrame(() => {
-      const nextDeltaY = pendingScrollDeltaRef.current;
-      pendingScrollDeltaRef.current = 0;
-      scrollFrameRef.current = null;
-
-      if (Math.abs(nextDeltaY) < MIN_SCROLL_DELTA) {
-        return;
-      }
-
-      onTwoFingerScroll?.(nextDeltaY);
-    });
   }
 
   function commitCurrentStroke() {
@@ -179,8 +198,7 @@ export function DraftSheet({
 
     currentStrokeRef.current = null;
     gestureModeRef.current = null;
-    lastTouchMoveYRef.current = null;
-    pendingScrollDeltaRef.current = 0;
+    lastTwoFingerTouchesRef.current = null;
     setCurrentStroke(null);
   }
 
@@ -198,6 +216,8 @@ export function DraftSheet({
         <View
           className="absolute bottom-0 left-0 right-0"
           style={{ top: TOOLBAR_HEIGHT }}
+          onTouchCancel={handleRawTouchEnd}
+          onTouchEnd={handleRawTouchEnd}
           onTouchMove={handleRawTouchMove}
           {...panResponder.panHandlers}
         >
@@ -290,9 +310,18 @@ function readPoint(event: GestureResponderEvent): DraftPoint {
   };
 }
 
-function getTouchCenterY(touches: TouchPoint[]) {
-  const [firstTouch, secondTouch] = touches;
-  return (firstTouch.pageY + secondTouch.pageY) / 2;
+function getFingerDeltaY(
+  currentTouch: TouchPoint,
+  lastTouches: TouchPoint[],
+  fallbackIndex: number
+) {
+  const lastTouch =
+    currentTouch.identifier !== undefined
+      ? lastTouches.find((touch) => touch.identifier === currentTouch.identifier)
+      : undefined;
+  const matchedTouch = lastTouch ?? lastTouches[fallbackIndex];
+
+  return matchedTouch ? matchedTouch.pageY - currentTouch.pageY : null;
 }
 
 function getDistance(start: DraftPoint, end: DraftPoint) {
