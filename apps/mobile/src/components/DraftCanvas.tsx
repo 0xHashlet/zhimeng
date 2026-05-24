@@ -15,6 +15,10 @@ type DraftCanvasProps = {
     startY: number;
   }>;
   enabled: boolean;
+  inputOnly?: boolean;
+  onDrawEnd?: () => void;
+  onDrawMove?: (point: DraftPoint) => void;
+  onDrawStart?: (point: DraftPoint) => void;
   onTwoFingerScroll?: (deltaY: number, centerY: number) => void;
   renderCommittedStrokes?: boolean;
   strokes: DraftStroke[];
@@ -34,7 +38,11 @@ const SCROLL_RESPONSE_RATIO = 1.25;
 export function DraftCanvas({
   blockedRanges = [],
   enabled,
+  inputOnly = false,
   onChange,
+  onDrawEnd,
+  onDrawMove,
+  onDrawStart,
   onTwoFingerScroll,
   renderCommittedStrokes = true,
   strokes
@@ -75,6 +83,12 @@ export function DraftCanvas({
           };
 
           currentStrokeRef.current = nextStroke;
+          onDrawStart?.(point);
+
+          if (inputOnly) {
+            return;
+          }
+
           setCurrentStroke(nextStroke);
         },
         onPanResponderMove: (event) => {
@@ -113,12 +127,19 @@ export function DraftCanvas({
             return;
           }
 
+          onDrawMove?.(nextPoint);
+
           const nextStroke = {
             ...stroke,
             points: [...stroke.points, nextPoint]
           };
 
           currentStrokeRef.current = nextStroke;
+
+          if (inputOnly) {
+            return;
+          }
+
           setCurrentStroke(nextStroke);
         },
         onPanResponderRelease: (event) => {
@@ -135,7 +156,18 @@ export function DraftCanvas({
           resetGesture();
         }
       }),
-    [blockedRanges, canvasSize, enabled, onChange, onTwoFingerScroll, strokes]
+    [
+      blockedRanges,
+      canvasSize,
+      enabled,
+      inputOnly,
+      onChange,
+      onDrawEnd,
+      onDrawMove,
+      onDrawStart,
+      onTwoFingerScroll,
+      strokes
+    ]
   );
 
   function handleLayout(event: LayoutChangeEvent) {
@@ -154,8 +186,12 @@ export function DraftCanvas({
 
     const stroke = currentStrokeRef.current;
 
-    if (stroke && stroke.points.length > 1) {
+    if (!inputOnly && stroke && stroke.points.length > 1) {
       onChange([...strokes, stroke]);
+    }
+
+    if (gestureModeRef.current === "draw") {
+      onDrawEnd?.();
     }
 
     currentStrokeRef.current = null;
@@ -172,6 +208,10 @@ export function DraftCanvas({
   }
 
   function resetGesture() {
+    if (gestureModeRef.current === "draw") {
+      onDrawEnd?.();
+    }
+
     currentStrokeRef.current = null;
     gestureModeRef.current = null;
     lastTwoFingerTouchesRef.current = null;
