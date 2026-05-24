@@ -10,8 +10,13 @@ import { colors } from "../theme/colors";
 import type { DraftPoint, DraftStroke } from "../types/draft";
 
 type DraftCanvasProps = {
+  blockedRanges?: Array<{
+    endY: number;
+    startY: number;
+  }>;
   enabled: boolean;
-  onTwoFingerScroll?: (deltaY: number) => void;
+  onTwoFingerScroll?: (deltaY: number, centerY: number) => void;
+  renderCommittedStrokes?: boolean;
   strokes: DraftStroke[];
   onChange: (strokes: DraftStroke[]) => void;
 };
@@ -26,9 +31,11 @@ const MIN_SCROLL_DELTA = 2;
 const SCROLL_RESPONSE_RATIO = 1.25;
 
 export function DraftCanvas({
+  blockedRanges = [],
   enabled,
   onChange,
   onTwoFingerScroll,
+  renderCommittedStrokes = true,
   strokes
 }: DraftCanvasProps) {
   const [canvasSize, setCanvasSize] = useState({ height: 1, width: 1 });
@@ -53,8 +60,14 @@ export function DraftCanvas({
             return;
           }
 
-          gestureModeRef.current = "draw";
           const point = readPoint(event);
+
+          if (isPointBlocked(point, blockedRanges)) {
+            resetGesture();
+            return;
+          }
+
+          gestureModeRef.current = "draw";
           const nextStroke = {
             id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
             points: [point]
@@ -85,7 +98,10 @@ export function DraftCanvas({
 
           const nextPoint = readPoint(event);
 
-          if (!isPointInCanvas(nextPoint, canvasSize)) {
+          if (
+            !isPointInCanvas(nextPoint, canvasSize) ||
+            isPointBlocked(nextPoint, blockedRanges)
+          ) {
             commitCurrentStroke();
             return;
           }
@@ -118,7 +134,7 @@ export function DraftCanvas({
           resetGesture();
         }
       }),
-    [canvasSize, enabled, onTwoFingerScroll, strokes]
+    [blockedRanges, canvasSize, enabled, onTwoFingerScroll, strokes]
   );
 
   function handleLayout(event: LayoutChangeEvent) {
@@ -202,7 +218,7 @@ export function DraftCanvas({
     const deltaY =
       ((firstPendingDeltaY + secondPendingDeltaY) / 2) * SCROLL_RESPONSE_RATIO;
     pendingFingerDeltasRef.current = [0, 0];
-    onTwoFingerScroll?.(deltaY);
+    onTwoFingerScroll?.(deltaY, getTouchCenterY(currentTouches));
   }
 
   return (
@@ -213,7 +229,10 @@ export function DraftCanvas({
       {...panResponder.panHandlers}
     >
       <Svg height={canvasSize.height} width={canvasSize.width}>
-        {[...strokes, ...(currentStroke ? [currentStroke] : [])].map((stroke) => (
+        {[
+          ...(renderCommittedStrokes ? strokes : []),
+          ...(currentStroke ? [currentStroke] : [])
+        ].map((stroke) => (
           <Path
             key={stroke.id}
             d={toPath(stroke.points)}
@@ -241,6 +260,11 @@ function getDistance(start: DraftPoint, end: DraftPoint) {
   return Math.hypot(end.x - start.x, end.y - start.y);
 }
 
+function getTouchCenterY(touches: TouchPoint[]) {
+  const [firstTouch, secondTouch] = touches;
+  return (firstTouch.pageY + secondTouch.pageY) / 2;
+}
+
 function isPointInCanvas(
   point: DraftPoint,
   canvasSize: {
@@ -253,6 +277,18 @@ function isPointInCanvas(
     point.y >= 0 &&
     point.x <= canvasSize.width &&
     point.y <= canvasSize.height
+  );
+}
+
+function isPointBlocked(
+  point: DraftPoint,
+  blockedRanges: Array<{
+    endY: number;
+    startY: number;
+  }>
+) {
+  return blockedRanges.some(
+    (range) => point.y >= range.startY && point.y <= range.endY
   );
 }
 

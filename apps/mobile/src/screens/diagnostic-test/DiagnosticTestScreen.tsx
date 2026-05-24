@@ -8,7 +8,8 @@ import {
   Pressable,
   ScrollView,
   Text,
-  View
+  View,
+  type LayoutChangeEvent
 } from "react-native";
 import type { DimensionValue } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -25,7 +26,7 @@ import { DraftCanvas } from "../../components/DraftCanvas";
 import type { RootStackParamList } from "../../navigation/AppNavigator";
 import { fetchMockDiagnostic } from "../../services/practice";
 import { colors } from "../../theme/colors";
-import type { DraftStroke } from "../../types/draft";
+import type { DraftPoint, DraftStroke } from "../../types/draft";
 import type { MockDiagnostic } from "../../types/practice";
 
 const screenWidth = Dimensions.get("window").width;
@@ -33,6 +34,9 @@ const screenHeight = Dimensions.get("window").height;
 const questionPanelCollapsedHeight = 156;
 const questionPanelExpandedHeight = Math.min(screenHeight * 0.58, 440);
 const questionPanelBottomGap = 32;
+const topChromeHeight = 57;
+const materialHorizontalInset = 22;
+const materialTopInset = 21;
 
 type DraftLayer = "material" | "question";
 
@@ -56,6 +60,7 @@ export function DiagnosticTestScreen() {
   const [questionPanelBottomInset, setQuestionPanelBottomInset] = useState(
     questionPanelExpandedHeight + questionPanelBottomGap
   );
+  const [contentHeight, setContentHeight] = useState(screenHeight);
   const materialScrollRefs = useRef<Record<number, ScrollView | null>>({});
   const materialScrollOffsets = useRef<Record<number, number>>({});
   const materialViewportHeights = useRef<Record<number, number>>({});
@@ -68,6 +73,9 @@ export function DiagnosticTestScreen() {
     new Animated.Value(questionPanelExpandedHeight)
   ).current;
   const questionPanelHeightRef = useRef(questionPanelExpandedHeight);
+  const [questionPanelHeightValue, setQuestionPanelHeightValue] = useState(
+    questionPanelExpandedHeight
+  );
 
   const questionPanelPanResponder = useMemo(
     () =>
@@ -95,6 +103,7 @@ export function DiagnosticTestScreen() {
             questionPanelHeightRef.current - gestureState.dy
           );
           setQuestionPanelBottomInset(nextHeight + questionPanelBottomGap);
+          setQuestionPanelHeightValue(nextHeight);
           questionPanelHeight.setValue(nextHeight);
         },
         onPanResponderRelease: (_, gestureState) => {
@@ -149,6 +158,7 @@ export function DiagnosticTestScreen() {
 
     questionPanelHeightRef.current = targetHeight;
     setQuestionPanelBottomInset(targetHeight + questionPanelBottomGap);
+    setQuestionPanelHeightValue(targetHeight);
     Animated.spring(questionPanelHeight, {
       damping: 22,
       mass: 0.8,
@@ -171,42 +181,17 @@ export function DiagnosticTestScreen() {
   const hasActiveDraft =
     activeDrafts.material.length > 0 || activeDrafts.question.length > 0;
 
-  function updateDraftLayer(layer: DraftLayer, nextStrokes: DraftStroke[]) {
-    if (!activeQuestionId) {
-      return;
-    }
-
-    setDrafts((currentDrafts) => {
-      const currentQuestionDrafts =
-        currentDrafts[activeQuestionId] ?? createEmptyQuestionDrafts();
-
-      return {
-        ...currentDrafts,
-        [activeQuestionId]: {
-          ...currentQuestionDrafts,
-          [layer]: nextStrokes
-        }
-      };
-    });
-  }
-
   function undoDraftStroke() {
     if (!activeQuestionId) {
       return;
     }
 
     setDrafts((currentDrafts) => {
-      const currentQuestionDrafts =
-        currentDrafts[activeQuestionId] ?? createEmptyQuestionDrafts();
-      const targetLayer =
-        currentQuestionDrafts.question.length > 0 ? "question" : "material";
-
       return {
         ...currentDrafts,
-        [activeQuestionId]: {
-          ...currentQuestionDrafts,
-          [targetLayer]: currentQuestionDrafts[targetLayer].slice(0, -1)
-        }
+        [activeQuestionId]: undoQuestionDraft(
+          currentDrafts[activeQuestionId] ?? createEmptyQuestionDrafts()
+        )
       };
     });
   }
@@ -246,9 +231,102 @@ export function DiagnosticTestScreen() {
     });
   }
 
+  function handleDraftStrokeCommit(nextStrokes: DraftStroke[]) {
+    if (!activeQuestionId) {
+      return;
+    }
+
+    const nextStroke = nextStrokes[nextStrokes.length - 1];
+
+    if (!nextStroke) {
+      return;
+    }
+
+    const splitDrafts = splitScreenStroke(nextStroke);
+
+    setDrafts((currentDrafts) => ({
+      ...currentDrafts,
+      [activeQuestionId]: mergeQuestionDrafts(
+        currentDrafts[activeQuestionId] ?? createEmptyQuestionDrafts(),
+        splitDrafts
+      )
+    }));
+  }
+
+  function handleDraftTwoFingerScroll(deltaY: number, centerY: number) {
+    if (!activeQuestionId) {
+      return;
+    }
+
+    const questionPanelTop = screenHeight - questionPanelHeightValue;
+
+    if (centerY >= questionPanelTop) {
+      scrollQuestionContent(activeQuestionId, deltaY);
+      return;
+    }
+
+    scrollMaterialContent(activeQuestionId, deltaY);
+  }
+
+  function handleContentLayout(event: LayoutChangeEvent) {
+    setContentHeight(event.nativeEvent.layout.height);
+  }
+
+  function splitScreenStroke(stroke: DraftStroke): QuestionDrafts {
+    const layerPoints = stroke.points.reduce<Record<DraftLayer, DraftPoint[]>>(
+      (result, point) => {
+        const layerPoint = convertScreenPointToLayerPoint(point);
+
+        if (layerPoint) {
+          result[layerPoint.layer].push(layerPoint.point);
+        }
+
+        return result;
+      },
+      {
+        material: [],
+        question: []
+      }
+    );
+
+    return {
+      material: createLayerStrokes(stroke.id, "material", layerPoints.material),
+      question: createLayerStrokes(stroke.id, "question", layerPoints.question)
+    };
+  }
+
+  function convertScreenPointToLayerPoint(point: {
+    x: number;
+    y: number;
+  }): { layer: DraftLayer; point: { x: number; y: number } } | null {
+    const questionPanelTop = contentHeight - questionPanelHeightValue;
+
+    if (point.y >= questionPanelTop) {
+      return {
+        layer: "question",
+        point: {
+          x: point.x,
+          y: point.y - questionPanelTop
+        }
+      };
+    }
+
+    return {
+      layer: "material",
+      point: {
+        x: point.x - materialHorizontalInset,
+        y:
+          point.y -
+          topChromeHeight -
+          materialTopInset +
+          (materialScrollOffsets.current[activeQuestionId ?? 0] ?? 0)
+      }
+    };
+  }
+
   return (
     <SafeAreaView className="flex-1 bg-glacier-background">
-      <View className="flex-1">
+      <View className="flex-1" onLayout={handleContentLayout}>
         <View className="h-14 flex-row items-center justify-between px-3.5">
           <Pressable
             accessibilityRole="button"
@@ -357,14 +435,9 @@ export function DiagnosticTestScreen() {
                       </Text>
                     ))}
                     <DraftCanvas
-                      enabled={draftVisible}
+                      enabled={false}
                       strokes={drafts[item.id]?.material ?? []}
-                      onTwoFingerScroll={(deltaY) =>
-                        scrollMaterialContent(item.id, deltaY)
-                      }
-                      onChange={(nextStrokes) =>
-                        updateDraftLayer("material", nextStrokes)
-                      }
+                      onChange={() => undefined}
                     />
                   </View>
                 </ScrollView>
@@ -450,18 +523,13 @@ export function DiagnosticTestScreen() {
                           </Pressable>
                         );
                       })}
-                      <DraftCanvas
-                        enabled={draftVisible}
-                        strokes={drafts[item.id]?.question ?? []}
-                        onTwoFingerScroll={(deltaY) =>
-                          scrollQuestionContent(item.id, deltaY)
-                        }
-                        onChange={(nextStrokes) =>
-                          updateDraftLayer("question", nextStrokes)
-                        }
-                      />
                     </View>
                   </ScrollView>
+                  <DraftCanvas
+                    enabled={false}
+                    strokes={drafts[item.id]?.question ?? []}
+                    onChange={() => undefined}
+                  />
                 </Animated.View>
               </View>
             ))}
@@ -475,6 +543,14 @@ export function DiagnosticTestScreen() {
             style={{ top: 57 }}
           />
         ) : null}
+
+        <DraftCanvas
+          enabled={draftVisible}
+          renderCommittedStrokes={false}
+          strokes={[]}
+          onTwoFingerScroll={handleDraftTwoFingerScroll}
+          onChange={handleDraftStrokeCommit}
+        />
 
         {draftVisible ? (
           <View className="absolute left-0 right-0 top-0 z-50 border-b border-glacier-border bg-glacier-background px-5">
@@ -522,6 +598,50 @@ function clampQuestionPanelHeight(height: number) {
 function clampScrollOffset(offset: number, maxOffset?: number) {
   const nextOffset = Math.max(0, offset);
   return typeof maxOffset === "number" ? Math.min(nextOffset, maxOffset) : nextOffset;
+}
+
+function createLayerStrokes(
+  strokeId: string,
+  layer: DraftLayer,
+  points: Array<{
+    x: number;
+    y: number;
+  }>
+) {
+  if (points.length <= 1) {
+    return [];
+  }
+
+  return [
+    {
+      id: `${strokeId}-${layer}`,
+      points
+    }
+  ];
+}
+
+function mergeQuestionDrafts(
+  currentDrafts: QuestionDrafts,
+  nextDrafts: QuestionDrafts
+) {
+  return {
+    material: [...currentDrafts.material, ...nextDrafts.material],
+    question: [...currentDrafts.question, ...nextDrafts.question]
+  };
+}
+
+function undoQuestionDraft(currentDrafts: QuestionDrafts) {
+  if (currentDrafts.question.length > 0) {
+    return {
+      ...currentDrafts,
+      question: currentDrafts.question.slice(0, -1)
+    };
+  }
+
+  return {
+    ...currentDrafts,
+    material: currentDrafts.material.slice(0, -1)
+  };
 }
 
 function StateCard({ description, title }: { description: string; title: string }) {
