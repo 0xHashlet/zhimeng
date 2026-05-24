@@ -34,6 +34,16 @@ const screenHeight = Dimensions.get("window").height;
 const questionPanelCollapsedHeight = 156;
 const questionPanelExpandedHeight = Math.min(screenHeight * 0.58, 440);
 const questionPanelBottomGap = 32;
+const questionPanelSurfaceStyle = {
+  elevation: 10,
+  shadowColor: colors.textPrimary,
+  shadowOffset: {
+    height: -6,
+    width: 0
+  },
+  shadowOpacity: 0.08,
+  shadowRadius: 18
+};
 
 type DraftLayer = "material" | "question";
 
@@ -720,15 +730,15 @@ export function DiagnosticTestScreen() {
                 </ScrollView>
 
                 <Animated.View
-                  className="absolute bottom-0 left-0 right-0 overflow-hidden bg-glacier-background"
-                  style={{ height: questionPanelHeight }}
+                  className="absolute bottom-0 left-0 right-0 rounded-t-[26px] bg-glacier-card"
+                  style={[{ height: questionPanelHeight }, questionPanelSurfaceStyle]}
                 >
                   <View
                     className="px-5 pb-2 pt-2"
                     {...questionPanelPanResponder.panHandlers}
                   >
                     <View className="mb-2 items-center">
-                      <View className="h-1.5 w-10 rounded-full bg-glacier-border" />
+                      <View className="h-1.5 w-12 rounded-full bg-glacier-border" />
                     </View>
                     <Text className="text-[17px] font-bold leading-[27px] text-glacier-textPrimary">
                       {item.question}
