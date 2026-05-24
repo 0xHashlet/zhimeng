@@ -57,6 +57,9 @@ export function DiagnosticTestScreen() {
   const [activePageIndex, setActivePageIndex] = useState(0);
   const [draftVisible, setDraftVisible] = useState(false);
   const [drafts, setDrafts] = useState<Record<number, QuestionDrafts>>({});
+  const [draftSessionStrokes, setDraftSessionStrokes] = useState<
+    Record<number, DraftStroke[]>
+  >({});
   const [questionPanelBottomInset, setQuestionPanelBottomInset] = useState(
     questionPanelExpandedHeight + questionPanelBottomGap
   );
@@ -178,11 +181,24 @@ export function DiagnosticTestScreen() {
   const activeDrafts = activeQuestionId
     ? (drafts[activeQuestionId] ?? createEmptyQuestionDrafts())
     : createEmptyQuestionDrafts();
+  const activeDraftSessionStrokes = activeQuestionId
+    ? (draftSessionStrokes[activeQuestionId] ?? [])
+    : [];
   const hasActiveDraft =
-    activeDrafts.material.length > 0 || activeDrafts.question.length > 0;
+    activeDrafts.material.length > 0 ||
+    activeDrafts.question.length > 0 ||
+    activeDraftSessionStrokes.length > 0;
 
   function undoDraftStroke() {
     if (!activeQuestionId) {
+      return;
+    }
+
+    if (activeDraftSessionStrokes.length > 0) {
+      setDraftSessionStrokes((currentStrokes) => ({
+        ...currentStrokes,
+        [activeQuestionId]: currentStrokes[activeQuestionId]?.slice(0, -1) ?? []
+      }));
       return;
     }
 
@@ -204,6 +220,10 @@ export function DiagnosticTestScreen() {
     setDrafts((currentDrafts) => ({
       ...currentDrafts,
       [activeQuestionId]: createEmptyQuestionDrafts()
+    }));
+    setDraftSessionStrokes((currentStrokes) => ({
+      ...currentStrokes,
+      [activeQuestionId]: []
     }));
   }
 
@@ -231,26 +251,43 @@ export function DiagnosticTestScreen() {
     });
   }
 
-  function handleDraftStrokeCommit(nextStrokes: DraftStroke[]) {
+  function handleDraftSessionChange(nextStrokes: DraftStroke[]) {
     if (!activeQuestionId) {
       return;
     }
 
-    const nextStroke = nextStrokes[nextStrokes.length - 1];
+    setDraftSessionStrokes((currentStrokes) => ({
+      ...currentStrokes,
+      [activeQuestionId]: nextStrokes
+    }));
+  }
 
-    if (!nextStroke) {
+  function closeDraftMode() {
+    if (!activeQuestionId) {
+      setDraftVisible(false);
       return;
     }
 
-    const splitDrafts = splitScreenStroke(nextStroke);
+    const sessionStrokes = draftSessionStrokes[activeQuestionId] ?? [];
+
+    if (sessionStrokes.length === 0) {
+      setDraftVisible(false);
+      return;
+    }
 
     setDrafts((currentDrafts) => ({
       ...currentDrafts,
-      [activeQuestionId]: mergeQuestionDrafts(
-        currentDrafts[activeQuestionId] ?? createEmptyQuestionDrafts(),
-        splitDrafts
+      [activeQuestionId]: sessionStrokes.reduce(
+        (mergedDrafts, stroke) =>
+          mergeQuestionDrafts(mergedDrafts, splitScreenStroke(stroke)),
+        currentDrafts[activeQuestionId] ?? createEmptyQuestionDrafts()
       )
     }));
+    setDraftSessionStrokes((currentStrokes) => ({
+      ...currentStrokes,
+      [activeQuestionId]: []
+    }));
+    setDraftVisible(false);
   }
 
   function handleDraftTwoFingerScroll(deltaY: number, centerY: number) {
@@ -258,7 +295,7 @@ export function DiagnosticTestScreen() {
       return;
     }
 
-    const questionPanelTop = screenHeight - questionPanelHeightValue;
+    const questionPanelTop = contentHeight - questionPanelHeightValue;
 
     if (centerY >= questionPanelTop) {
       scrollQuestionContent(activeQuestionId, deltaY);
@@ -273,21 +310,27 @@ export function DiagnosticTestScreen() {
   }
 
   function splitScreenStroke(stroke: DraftStroke): QuestionDrafts {
-    const layerPoints = stroke.points.reduce<Record<DraftLayer, DraftPoint[]>>(
-      (result, point) => {
-        const layerPoint = convertScreenPointToLayerPoint(point);
+    const layerPoints: Record<DraftLayer, DraftPoint[]> = {
+      material: [],
+      question: []
+    };
+    let previousPoint: DraftPoint | null = null;
+    let previousLayer: DraftLayer | null = null;
 
-        if (layerPoint) {
-          result[layerPoint.layer].push(layerPoint.point);
-        }
+    stroke.points.forEach((point) => {
+      const layer = getScreenPointLayer(point);
 
-        return result;
-      },
-      {
-        material: [],
-        question: []
+      if (previousPoint && previousLayer && previousLayer !== layer) {
+        layerPoints[previousLayer].push(
+          convertScreenPointToLayerPoint(point, previousLayer)
+        );
+        layerPoints[layer].push(convertScreenPointToLayerPoint(previousPoint, layer));
       }
-    );
+
+      layerPoints[layer].push(convertScreenPointToLayerPoint(point, layer));
+      previousPoint = point;
+      previousLayer = layer;
+    });
 
     return {
       material: createLayerStrokes(stroke.id, "material", layerPoints.material),
@@ -295,32 +338,34 @@ export function DiagnosticTestScreen() {
     };
   }
 
-  function convertScreenPointToLayerPoint(point: {
-    x: number;
-    y: number;
-  }): { layer: DraftLayer; point: { x: number; y: number } } | null {
+  function getScreenPointLayer(point: { x: number; y: number }): DraftLayer {
+    const questionPanelTop = contentHeight - questionPanelHeightValue;
+    return point.y >= questionPanelTop ? "question" : "material";
+  }
+
+  function convertScreenPointToLayerPoint(
+    point: {
+      x: number;
+      y: number;
+    },
+    layer: DraftLayer
+  ): DraftPoint {
     const questionPanelTop = contentHeight - questionPanelHeightValue;
 
-    if (point.y >= questionPanelTop) {
+    if (layer === "question") {
       return {
-        layer: "question",
-        point: {
-          x: point.x,
-          y: point.y - questionPanelTop
-        }
+        x: point.x,
+        y: point.y - questionPanelTop
       };
     }
 
     return {
-      layer: "material",
-      point: {
-        x: point.x - materialHorizontalInset,
-        y:
-          point.y -
-          topChromeHeight -
-          materialTopInset +
-          (materialScrollOffsets.current[activeQuestionId ?? 0] ?? 0)
-      }
+      x: point.x - materialHorizontalInset,
+      y:
+        point.y -
+        topChromeHeight -
+        materialTopInset +
+        (materialScrollOffsets.current[activeQuestionId ?? 0] ?? 0)
     };
   }
 
@@ -546,10 +591,9 @@ export function DiagnosticTestScreen() {
 
         <DraftCanvas
           enabled={draftVisible}
-          renderCommittedStrokes={false}
-          strokes={[]}
+          strokes={activeDraftSessionStrokes}
           onTwoFingerScroll={handleDraftTwoFingerScroll}
-          onChange={handleDraftStrokeCommit}
+          onChange={handleDraftSessionChange}
         />
 
         {draftVisible ? (
@@ -575,7 +619,7 @@ export function DiagnosticTestScreen() {
                   accessibilityRole="button"
                   accessibilityLabel="关闭草稿纸"
                   className="h-9 w-9 items-center justify-center rounded-full bg-glacier-cardSoft"
-                  onPress={() => setDraftVisible(false)}
+                  onPress={closeDraftMode}
                 >
                   <X color={colors.textSecondary} size={20} />
                 </Pressable>

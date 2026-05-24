@@ -23,6 +23,7 @@ type DraftCanvasProps = {
 
 type TouchPoint = {
   identifier?: string | number;
+  locationY?: number;
   pageY: number;
 };
 
@@ -134,7 +135,7 @@ export function DraftCanvas({
           resetGesture();
         }
       }),
-    [blockedRanges, canvasSize, enabled, onTwoFingerScroll, strokes]
+    [blockedRanges, canvasSize, enabled, onChange, onTwoFingerScroll, strokes]
   );
 
   function handleLayout(event: LayoutChangeEvent) {
@@ -262,7 +263,9 @@ function getDistance(start: DraftPoint, end: DraftPoint) {
 
 function getTouchCenterY(touches: TouchPoint[]) {
   const [firstTouch, secondTouch] = touches;
-  return (firstTouch.pageY + secondTouch.pageY) / 2;
+  const firstY = firstTouch.locationY ?? firstTouch.pageY;
+  const secondY = secondTouch.locationY ?? secondTouch.pageY;
+  return (firstY + secondY) / 2;
 }
 
 function isPointInCanvas(
