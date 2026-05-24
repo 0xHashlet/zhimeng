@@ -469,6 +469,14 @@ export function DiagnosticTestScreen() {
         )}
 
         {draftVisible ? (
+          <View
+            pointerEvents="none"
+            className="absolute bottom-0 left-0 right-0 bg-glacier-card/35"
+            style={{ top: 57 }}
+          />
+        ) : null}
+
+        {draftVisible ? (
           <View className="absolute left-0 right-0 top-0 z-50 border-b border-glacier-border bg-glacier-background px-5">
             <View className="h-14 flex-row items-center justify-between">
               <Text className="text-base font-extrabold text-glacier-textPrimary">

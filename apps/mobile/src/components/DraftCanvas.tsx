@@ -84,6 +84,12 @@ export function DraftCanvas({
           }
 
           const nextPoint = readPoint(event);
+
+          if (!isPointInCanvas(nextPoint, canvasSize)) {
+            commitCurrentStroke();
+            return;
+          }
+
           const lastPoint = stroke.points[stroke.points.length - 1];
 
           if (getDistance(lastPoint, nextPoint) < MIN_POINT_DISTANCE) {
@@ -112,7 +118,7 @@ export function DraftCanvas({
           resetGesture();
         }
       }),
-    [enabled, onTwoFingerScroll, strokes]
+    [canvasSize, enabled, onTwoFingerScroll, strokes]
   );
 
   function handleLayout(event: LayoutChangeEvent) {
@@ -233,6 +239,21 @@ function readPoint(event: GestureResponderEvent): DraftPoint {
 
 function getDistance(start: DraftPoint, end: DraftPoint) {
   return Math.hypot(end.x - start.x, end.y - start.y);
+}
+
+function isPointInCanvas(
+  point: DraftPoint,
+  canvasSize: {
+    height: number;
+    width: number;
+  }
+) {
+  return (
+    point.x >= 0 &&
+    point.y >= 0 &&
+    point.x <= canvasSize.width &&
+    point.y <= canvasSize.height
+  );
 }
 
 function getFingerDeltaY(
