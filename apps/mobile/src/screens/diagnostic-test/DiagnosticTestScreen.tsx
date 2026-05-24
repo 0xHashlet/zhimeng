@@ -24,6 +24,7 @@ const screenWidth = Dimensions.get("window").width;
 const screenHeight = Dimensions.get("window").height;
 const questionPanelCollapsedHeight = 156;
 const questionPanelExpandedHeight = Math.min(screenHeight * 0.58, 440);
+const questionPanelBottomGap = 32;
 
 export function DiagnosticTestScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -33,6 +34,9 @@ export function DiagnosticTestScreen() {
   const [activePageIndex, setActivePageIndex] = useState(0);
   const [draftVisible, setDraftVisible] = useState(false);
   const [drafts, setDrafts] = useState<Record<number, DraftStroke[]>>({});
+  const [questionPanelBottomInset, setQuestionPanelBottomInset] = useState(
+    questionPanelExpandedHeight + questionPanelBottomGap
+  );
   const materialScrollRefs = useRef<Record<number, ScrollView | null>>({});
   const materialScrollOffsets = useRef<Record<number, number>>({});
   const materialViewportHeights = useRef<Record<number, number>>({});
@@ -56,6 +60,7 @@ export function DiagnosticTestScreen() {
           const nextHeight = clampQuestionPanelHeight(
             questionPanelHeightRef.current - gestureState.dy
           );
+          setQuestionPanelBottomInset(nextHeight + questionPanelBottomGap);
           questionPanelHeight.setValue(nextHeight);
         },
         onPanResponderRelease: (_, gestureState) => {
@@ -106,6 +111,7 @@ export function DiagnosticTestScreen() {
         : questionPanelCollapsedHeight;
 
     questionPanelHeightRef.current = targetHeight;
+    setQuestionPanelBottomInset(targetHeight + questionPanelBottomGap);
     Animated.spring(questionPanelHeight, {
       damping: 22,
       mass: 0.8,
@@ -204,7 +210,7 @@ export function DiagnosticTestScreen() {
                   className="flex-1"
                   contentContainerClassName="px-5 pb-6 pt-5"
                   contentContainerStyle={{
-                    paddingBottom: questionPanelExpandedHeight + 32
+                    paddingBottom: questionPanelBottomInset
                   }}
                   onScroll={(event) => {
                     materialScrollOffsets.current[item.id] =
