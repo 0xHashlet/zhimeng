@@ -204,7 +204,7 @@ export function DiagnosticTestScreen() {
                   className="flex-1"
                   contentContainerClassName="px-5 pb-6 pt-5"
                   contentContainerStyle={{
-                    paddingBottom: questionPanelCollapsedHeight + 32
+                    paddingBottom: questionPanelExpandedHeight + 32
                   }}
                   onScroll={(event) => {
                     materialScrollOffsets.current[item.id] =
