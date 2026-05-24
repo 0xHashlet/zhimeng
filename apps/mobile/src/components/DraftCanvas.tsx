@@ -354,9 +354,33 @@ function toPath(points: DraftPoint[]) {
     return "";
   }
 
-  const [firstPoint, ...restPoints] = points;
-  return restPoints.reduce(
-    (path, point) => `${path} L ${point.x} ${point.y}`,
-    `M ${firstPoint.x} ${firstPoint.y}`
+  if (points.length === 1) {
+    return `M ${points[0].x} ${points[0].y}`;
+  }
+
+  const [firstPoint, secondPoint, ...remainingPoints] = points;
+
+  if (!secondPoint) {
+    return `M ${firstPoint.x} ${firstPoint.y}`;
+  }
+
+  if (remainingPoints.length === 0) {
+    return `M ${firstPoint.x} ${firstPoint.y} L ${secondPoint.x} ${secondPoint.y}`;
+  }
+
+  const smoothedPath = remainingPoints.reduce(
+    (path, point, index) => {
+      const controlPoint = points[index + 1];
+      const midPoint = {
+        x: (controlPoint.x + point.x) / 2,
+        y: (controlPoint.y + point.y) / 2
+      };
+
+      return `${path} Q ${controlPoint.x} ${controlPoint.y} ${midPoint.x} ${midPoint.y}`;
+    },
+    `M ${firstPoint.x} ${firstPoint.y} L ${(firstPoint.x + secondPoint.x) / 2} ${(firstPoint.y + secondPoint.y) / 2}`
   );
+  const lastPoint = points[points.length - 1];
+
+  return `${smoothedPath} L ${lastPoint.x} ${lastPoint.y}`;
 }

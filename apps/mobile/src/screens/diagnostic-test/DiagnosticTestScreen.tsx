@@ -302,11 +302,18 @@ export function DiagnosticTestScreen() {
     }
 
     const nextStrokeId = createDraftStrokeId(layer);
+    const boundaryPoint = getLayerBoundaryPoint(currentStroke.lastPoint, point);
 
+    appendDraftPoint(
+      activeQuestionId,
+      currentStroke.layer,
+      currentStroke.strokeId,
+      convertScreenPointToLayerPoint(boundaryPoint, currentStroke.layer)
+    );
     addDraftStroke(activeQuestionId, layer, {
       id: nextStrokeId,
       points: [
-        convertScreenPointToLayerPoint(currentStroke.lastPoint, layer),
+        convertScreenPointToLayerPoint(boundaryPoint, layer),
         convertScreenPointToLayerPoint(point, layer)
       ]
     });
@@ -370,6 +377,23 @@ export function DiagnosticTestScreen() {
   function getScreenPointLayer(point: { x: number; y: number }): DraftLayer {
     const questionPanelTop = contentHeight - questionPanelHeightValue;
     return point.y >= questionPanelTop ? "question" : "material";
+  }
+
+  function getLayerBoundaryPoint(startPoint: DraftPoint, endPoint: DraftPoint) {
+    const questionPanelTop = contentHeight - questionPanelHeightValue;
+    const distanceY = endPoint.y - startPoint.y;
+
+    if (distanceY === 0) {
+      return endPoint;
+    }
+
+    const progress = (questionPanelTop - startPoint.y) / distanceY;
+    const clampedProgress = Math.min(1, Math.max(0, progress));
+
+    return {
+      x: startPoint.x + (endPoint.x - startPoint.x) * clampedProgress,
+      y: questionPanelTop
+    };
   }
 
   function addDraftStroke(questionId: number, layer: DraftLayer, stroke: DraftStroke) {
