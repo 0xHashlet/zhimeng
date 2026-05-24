@@ -28,7 +28,7 @@ type TouchPoint = {
 
 const MIN_POINT_DISTANCE = 3;
 const MIN_SCROLL_DELTA = 2;
-const MIN_FINGER_SCROLL_DELTA = 1;
+const SCROLL_RESPONSE_RATIO = 1.45;
 const TOOLBAR_HEIGHT = 56;
 
 export function DraftSheet({
@@ -42,12 +42,14 @@ export function DraftSheet({
   const currentStrokeRef = useRef<DraftStroke | null>(null);
   const gestureModeRef = useRef<"draw" | "scroll" | null>(null);
   const lastTwoFingerTouchesRef = useRef<TouchPoint[] | null>(null);
+  const pendingFingerDeltasRef = useRef<[number, number]>([0, 0]);
 
   useEffect(() => {
     if (!visible) {
       setCurrentStroke(null);
       currentStrokeRef.current = null;
       lastTwoFingerTouchesRef.current = null;
+      pendingFingerDeltasRef.current = [0, 0];
       gestureModeRef.current = null;
     }
   }, [visible]);
@@ -134,6 +136,7 @@ export function DraftSheet({
 
     if (touches.length < 2) {
       lastTwoFingerTouchesRef.current = null;
+      pendingFingerDeltasRef.current = [0, 0];
       return;
     }
 
@@ -154,25 +157,34 @@ export function DraftSheet({
       return;
     }
 
+    pendingFingerDeltasRef.current = [
+      pendingFingerDeltasRef.current[0] + firstDeltaY,
+      pendingFingerDeltasRef.current[1] + secondDeltaY
+    ];
+
+    const [firstPendingDeltaY, secondPendingDeltaY] = pendingFingerDeltasRef.current;
+
     if (
-      Math.abs(firstDeltaY) < MIN_FINGER_SCROLL_DELTA ||
-      Math.abs(secondDeltaY) < MIN_FINGER_SCROLL_DELTA ||
-      Math.sign(firstDeltaY) !== Math.sign(secondDeltaY)
+      Math.abs(firstPendingDeltaY) < MIN_SCROLL_DELTA ||
+      Math.abs(secondPendingDeltaY) < MIN_SCROLL_DELTA
     ) {
       return;
     }
 
-    const deltaY = (firstDeltaY + secondDeltaY) / 2;
-
-    if (Math.abs(deltaY) < MIN_SCROLL_DELTA) {
+    if (Math.sign(firstPendingDeltaY) !== Math.sign(secondPendingDeltaY)) {
+      pendingFingerDeltasRef.current = [0, 0];
       return;
     }
 
+    const deltaY =
+      ((firstPendingDeltaY + secondPendingDeltaY) / 2) * SCROLL_RESPONSE_RATIO;
+    pendingFingerDeltasRef.current = [0, 0];
     onTwoFingerScroll?.(deltaY);
   }
 
   function handleRawTouchEnd(event: GestureResponderEvent) {
     lastTwoFingerTouchesRef.current = null;
+    pendingFingerDeltasRef.current = [0, 0];
 
     if (event.nativeEvent.touches.length === 0) {
       gestureModeRef.current = null;
@@ -199,6 +211,7 @@ export function DraftSheet({
     currentStrokeRef.current = null;
     gestureModeRef.current = null;
     lastTwoFingerTouchesRef.current = null;
+    pendingFingerDeltasRef.current = [0, 0];
     setCurrentStroke(null);
   }
 
