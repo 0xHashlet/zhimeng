@@ -103,12 +103,7 @@ export function DiagnosticTestScreen() {
   }, []);
 
   function settleQuestionPanel(nextHeight: number) {
-    const clampedHeight = clampQuestionPanelHeight(nextHeight);
-    const midpoint = (questionPanelCollapsedHeight + questionPanelExpandedHeight) / 2;
-    const targetHeight =
-      clampedHeight > midpoint
-        ? questionPanelExpandedHeight
-        : questionPanelCollapsedHeight;
+    const targetHeight = clampQuestionPanelHeight(nextHeight);
 
     questionPanelHeightRef.current = targetHeight;
     setQuestionPanelBottomInset(targetHeight + questionPanelBottomGap);
