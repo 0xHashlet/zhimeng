@@ -34,6 +34,7 @@ const screenHeight = Dimensions.get("window").height;
 const questionPanelCollapsedHeight = 156;
 const questionPanelExpandedHeight = Math.min(screenHeight * 0.58, 440);
 const questionPanelBottomGap = 32;
+const draftBoundaryOverlap = 4;
 const topChromeHeight = 57;
 const materialHorizontalInset = 22;
 const materialTopInset = 21;
@@ -303,16 +304,27 @@ export function DiagnosticTestScreen() {
 
     const nextStrokeId = createDraftStrokeId(layer);
     const boundaryPoint = getLayerBoundaryPoint(currentStroke.lastPoint, point);
+    const currentLayerExitPoint = getLayerBoundaryPoint(
+      currentStroke.lastPoint,
+      point,
+      currentStroke.layer === "material" ? draftBoundaryOverlap : -draftBoundaryOverlap
+    );
+    const nextLayerEntryPoint = getLayerBoundaryPoint(
+      currentStroke.lastPoint,
+      point,
+      layer === "material" ? draftBoundaryOverlap : -draftBoundaryOverlap
+    );
 
     appendDraftPoint(
       activeQuestionId,
       currentStroke.layer,
       currentStroke.strokeId,
-      convertScreenPointToLayerPoint(boundaryPoint, currentStroke.layer)
+      convertScreenPointToLayerPoint(currentLayerExitPoint, currentStroke.layer)
     );
     addDraftStroke(activeQuestionId, layer, {
       id: nextStrokeId,
       points: [
+        convertScreenPointToLayerPoint(nextLayerEntryPoint, layer),
         convertScreenPointToLayerPoint(boundaryPoint, layer),
         convertScreenPointToLayerPoint(point, layer)
       ]
@@ -379,7 +391,11 @@ export function DiagnosticTestScreen() {
     return point.y >= questionPanelTop ? "question" : "material";
   }
 
-  function getLayerBoundaryPoint(startPoint: DraftPoint, endPoint: DraftPoint) {
+  function getLayerBoundaryPoint(
+    startPoint: DraftPoint,
+    endPoint: DraftPoint,
+    offsetY = 0
+  ) {
     const questionPanelTop = contentHeight - questionPanelHeightValue;
     const distanceY = endPoint.y - startPoint.y;
 
@@ -392,7 +408,7 @@ export function DiagnosticTestScreen() {
 
     return {
       x: startPoint.x + (endPoint.x - startPoint.x) * clampedProgress,
-      y: questionPanelTop
+      y: questionPanelTop + offsetY
     };
   }
 
@@ -588,7 +604,12 @@ export function DiagnosticTestScreen() {
                 </ScrollView>
 
                 <Animated.View
-                  className="absolute bottom-0 left-0 right-0 overflow-hidden border-t border-glacier-border bg-glacier-background"
+                  className={[
+                    "absolute bottom-0 left-0 right-0 overflow-hidden border-t bg-glacier-background",
+                    draftVisible && item.id === activeQuestionId
+                      ? "border-transparent"
+                      : "border-glacier-border"
+                  ].join(" ")}
                   style={{ height: questionPanelHeight }}
                 >
                   <View
