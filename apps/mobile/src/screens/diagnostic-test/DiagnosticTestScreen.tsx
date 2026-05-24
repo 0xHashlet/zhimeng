@@ -485,33 +485,66 @@ export function DiagnosticTestScreen() {
   }
 
   function splitSessionStroke(stroke: DraftSessionStroke): QuestionDrafts {
-    const layerPoints: Record<DraftLayer, DraftPoint[]> = {
+    const splitDrafts: QuestionDrafts = {
       material: [],
       question: []
     };
+    let segmentIndex = 0;
     let previousPoint: DraftSessionPoint | null = null;
     let previousLayer: DraftLayer | null = null;
+    let currentLayer: DraftLayer | null = null;
+    let currentPoints: DraftPoint[] = [];
+
+    function flushSegment() {
+      if (!currentLayer || currentPoints.length <= 1) {
+        currentPoints = [];
+        return;
+      }
+
+      splitDrafts[currentLayer] = [
+        ...splitDrafts[currentLayer],
+        {
+          id: `${stroke.id}-${currentLayer}-${segmentIndex}`,
+          points: currentPoints
+        }
+      ];
+      segmentIndex += 1;
+      currentPoints = [];
+    }
 
     stroke.points.forEach((point) => {
       const layer = getSessionPointLayer(point);
+      const layerPoint = convertSessionPointToLayerPoint(point, layer);
 
       if (previousPoint && previousLayer && previousLayer !== layer) {
         const boundaryPoint = getSessionBoundaryPoint(previousPoint, point);
-        layerPoints[previousLayer].push(
+
+        currentPoints.push(
           convertSessionPointToLayerPoint(boundaryPoint, previousLayer)
         );
-        layerPoints[layer].push(convertSessionPointToLayerPoint(boundaryPoint, layer));
+        flushSegment();
+
+        currentLayer = layer;
+        currentPoints = [
+          convertSessionPointToLayerPoint(boundaryPoint, layer),
+          layerPoint
+        ];
+      } else {
+        if (currentLayer !== layer) {
+          flushSegment();
+          currentLayer = layer;
+        }
+
+        currentPoints.push(layerPoint);
       }
 
-      layerPoints[layer].push(convertSessionPointToLayerPoint(point, layer));
       previousPoint = point;
       previousLayer = layer;
     });
 
-    return {
-      material: createLayerStrokes(stroke.id, "material", layerPoints.material),
-      question: createLayerStrokes(stroke.id, "question", layerPoints.question)
-    };
+    flushSegment();
+
+    return splitDrafts;
   }
 
   function getSessionPointLayer(point: DraftSessionPoint): DraftLayer {
@@ -854,19 +887,6 @@ function clampScrollOffset(offset: number, maxOffset?: number) {
 
 function createDraftStrokeId(layer: DraftLayer | "session") {
   return `${Date.now()}-${layer}-${Math.random().toString(36).slice(2)}`;
-}
-
-function createLayerStrokes(strokeId: string, layer: DraftLayer, points: DraftPoint[]) {
-  if (points.length <= 1) {
-    return [];
-  }
-
-  return [
-    {
-      id: `${strokeId}-${layer}-${Math.random().toString(36).slice(2)}`,
-      points
-    }
-  ];
 }
 
 function mergeQuestionDrafts(
