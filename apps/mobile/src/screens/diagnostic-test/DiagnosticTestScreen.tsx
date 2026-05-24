@@ -347,7 +347,7 @@ export function DiagnosticTestScreen() {
                   }}
                   scrollEventThrottle={16}
                 >
-                  <View className="relative gap-3 rounded-[22px] border border-glacier-border bg-glacier-card p-4">
+                  <View className="relative gap-4 px-0.5 py-1">
                     {item.material.map((paragraph) => (
                       <Text
                         key={paragraph}
@@ -370,17 +370,17 @@ export function DiagnosticTestScreen() {
                 </ScrollView>
 
                 <Animated.View
-                  className="absolute bottom-0 left-0 right-0 overflow-hidden rounded-t-[28px] border-t border-glacier-border bg-glacier-background shadow-sm"
+                  className="absolute bottom-0 left-0 right-0 overflow-hidden border-t border-glacier-border bg-glacier-background"
                   style={{ height: questionPanelHeight }}
                 >
                   <View
-                    className="px-5 pb-3 pt-2"
+                    className="px-5 pb-2 pt-2"
                     {...questionPanelPanResponder.panHandlers}
                   >
                     <View className="mb-2 items-center">
                       <View className="h-1.5 w-10 rounded-full bg-glacier-border" />
                     </View>
-                    <Text className="text-lg font-bold leading-7 text-glacier-textPrimary">
+                    <Text className="text-[17px] font-bold leading-[27px] text-glacier-textPrimary">
                       {item.question}
                     </Text>
                   </View>
@@ -392,7 +392,7 @@ export function DiagnosticTestScreen() {
                     showsVerticalScrollIndicator={false}
                     scrollEnabled={!draftVisible}
                     className="flex-1"
-                    contentContainerClassName="gap-3 px-5 pb-5"
+                    contentContainerClassName="gap-2.5 px-5 pb-5"
                     onScroll={(event) => {
                       questionScrollOffsets.current[item.id] =
                         event.nativeEvent.contentOffset.y;
@@ -411,7 +411,7 @@ export function DiagnosticTestScreen() {
                     }}
                     scrollEventThrottle={16}
                   >
-                    <View className="relative gap-3">
+                    <View className="relative gap-2.5">
                       {item.options.map((option) => {
                         const selected = option.key === item.selectedAnswer;
 
@@ -423,7 +423,7 @@ export function DiagnosticTestScreen() {
                             accessibilityState={{ selected }}
                             disabled={draftVisible}
                             className={[
-                              "min-h-[58px] flex-row items-center gap-4 rounded-[18px] border px-4",
+                              "min-h-[54px] flex-row items-center gap-4 rounded-2xl border px-4",
                               selected
                                 ? "border-glacier-primary bg-glacier-soft"
                                 : "border-glacier-border bg-glacier-card"
