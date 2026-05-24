@@ -1,7 +1,15 @@
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { useEffect, useRef, useState } from "react";
-import { Dimensions, Pressable, ScrollView, Text, View } from "react-native";
+import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  Animated,
+  Dimensions,
+  PanResponder,
+  Pressable,
+  ScrollView,
+  Text,
+  View
+} from "react-native";
 import type { DimensionValue } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Bookmark, Check, ChevronLeft, PencilLine } from "lucide-react-native";
@@ -13,6 +21,9 @@ import type { DraftStroke } from "../../types/draft";
 import type { MockDiagnostic } from "../../types/practice";
 
 const screenWidth = Dimensions.get("window").width;
+const screenHeight = Dimensions.get("window").height;
+const questionPanelCollapsedHeight = 156;
+const questionPanelExpandedHeight = Math.min(screenHeight * 0.58, 440);
 
 export function DiagnosticTestScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -26,6 +37,36 @@ export function DiagnosticTestScreen() {
   const materialScrollOffsets = useRef<Record<number, number>>({});
   const materialViewportHeights = useRef<Record<number, number>>({});
   const materialScrollMaxOffsets = useRef<Record<number, number>>({});
+  const questionPanelHeight = useRef(
+    new Animated.Value(questionPanelExpandedHeight)
+  ).current;
+  const questionPanelHeightRef = useRef(questionPanelExpandedHeight);
+
+  const questionPanelPanResponder = useMemo(
+    () =>
+      PanResponder.create({
+        onStartShouldSetPanResponder: () => true,
+        onMoveShouldSetPanResponder: (_, gestureState) => Math.abs(gestureState.dy) > 4,
+        onPanResponderGrant: () => {
+          questionPanelHeight.stopAnimation((value) => {
+            questionPanelHeightRef.current = value;
+          });
+        },
+        onPanResponderMove: (_, gestureState) => {
+          const nextHeight = clampQuestionPanelHeight(
+            questionPanelHeightRef.current - gestureState.dy
+          );
+          questionPanelHeight.setValue(nextHeight);
+        },
+        onPanResponderRelease: (_, gestureState) => {
+          settleQuestionPanel(questionPanelHeightRef.current - gestureState.dy);
+        },
+        onPanResponderTerminate: () => {
+          settleQuestionPanel(questionPanelHeightRef.current);
+        }
+      }),
+    [questionPanelHeight]
+  );
 
   useEffect(() => {
     let isMounted = true;
@@ -55,6 +96,24 @@ export function DiagnosticTestScreen() {
       isMounted = false;
     };
   }, []);
+
+  function settleQuestionPanel(nextHeight: number) {
+    const clampedHeight = clampQuestionPanelHeight(nextHeight);
+    const midpoint = (questionPanelCollapsedHeight + questionPanelExpandedHeight) / 2;
+    const targetHeight =
+      clampedHeight > midpoint
+        ? questionPanelExpandedHeight
+        : questionPanelCollapsedHeight;
+
+    questionPanelHeightRef.current = targetHeight;
+    Animated.spring(questionPanelHeight, {
+      damping: 22,
+      mass: 0.8,
+      stiffness: 220,
+      toValue: targetHeight,
+      useNativeDriver: false
+    }).start();
+  }
 
   const progressText = diagnostic
     ? `${diagnostic.currentIndex} / ${diagnostic.totalCount}`
@@ -144,6 +203,9 @@ export function DiagnosticTestScreen() {
                   showsVerticalScrollIndicator={false}
                   className="flex-1"
                   contentContainerClassName="px-5 pb-6 pt-5"
+                  contentContainerStyle={{
+                    paddingBottom: questionPanelCollapsedHeight + 32
+                  }}
                   onScroll={(event) => {
                     materialScrollOffsets.current[item.id] =
                       event.nativeEvent.contentOffset.y;
@@ -174,12 +236,27 @@ export function DiagnosticTestScreen() {
                   </View>
                 </ScrollView>
 
-                <View className="border-t border-glacier-border bg-glacier-background px-5 pb-5 pt-4">
-                  <Text className="text-lg font-bold leading-7 text-glacier-textPrimary">
-                    {item.question}
-                  </Text>
+                <Animated.View
+                  className="absolute bottom-0 left-0 right-0 overflow-hidden rounded-t-[28px] border-t border-glacier-border bg-glacier-background shadow-sm"
+                  style={{ height: questionPanelHeight }}
+                >
+                  <View
+                    className="px-5 pb-3 pt-2"
+                    {...questionPanelPanResponder.panHandlers}
+                  >
+                    <View className="mb-2 items-center">
+                      <View className="h-1.5 w-10 rounded-full bg-glacier-border" />
+                    </View>
+                    <Text className="text-lg font-bold leading-7 text-glacier-textPrimary">
+                      {item.question}
+                    </Text>
+                  </View>
 
-                  <View className="mt-4 gap-3">
+                  <ScrollView
+                    showsVerticalScrollIndicator={false}
+                    className="flex-1"
+                    contentContainerClassName="gap-3 px-5 pb-5"
+                  >
                     {item.options.map((option) => {
                       const selected = option.key === item.selectedAnswer;
 
@@ -217,8 +294,8 @@ export function DiagnosticTestScreen() {
                         </Pressable>
                       );
                     })}
-                  </View>
-                </View>
+                  </ScrollView>
+                </Animated.View>
               </View>
             ))}
           </ScrollView>
@@ -255,6 +332,13 @@ export function DiagnosticTestScreen() {
         />
       </View>
     </SafeAreaView>
+  );
+}
+
+function clampQuestionPanelHeight(height: number) {
+  return Math.min(
+    questionPanelExpandedHeight,
+    Math.max(questionPanelCollapsedHeight, height)
   );
 }
 
