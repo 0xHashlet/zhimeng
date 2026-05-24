@@ -6,8 +6,7 @@ import {
   Pressable,
   Text,
   View,
-  type GestureResponderEvent,
-  type PanResponderGestureState
+  type GestureResponderEvent
 } from "react-native";
 import Svg, { Path } from "react-native-svg";
 import { RotateCcw, Trash2, X } from "lucide-react-native";
@@ -27,6 +26,7 @@ type TouchPoint = {
 };
 
 const MIN_POINT_DISTANCE = 3;
+const MIN_SCROLL_DELTA = 2;
 const TOOLBAR_HEIGHT = 56;
 
 export function DraftSheet({
@@ -39,12 +39,21 @@ export function DraftSheet({
   const [currentStroke, setCurrentStroke] = useState<DraftStroke | null>(null);
   const currentStrokeRef = useRef<DraftStroke | null>(null);
   const gestureModeRef = useRef<"draw" | "scroll" | null>(null);
-  const lastTwoFingerYRef = useRef<number | null>(null);
+  const lastTouchMoveYRef = useRef<number | null>(null);
+  const pendingScrollDeltaRef = useRef(0);
+  const scrollFrameRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (!visible) {
       setCurrentStroke(null);
       currentStrokeRef.current = null;
+      lastTouchMoveYRef.current = null;
+      pendingScrollDeltaRef.current = 0;
+
+      if (scrollFrameRef.current !== null) {
+        cancelAnimationFrame(scrollFrameRef.current);
+        scrollFrameRef.current = null;
+      }
     }
   }, [visible]);
 
@@ -56,7 +65,6 @@ export function DraftSheet({
         onPanResponderGrant: (event) => {
           if (event.nativeEvent.touches.length >= 2) {
             gestureModeRef.current = "scroll";
-            lastTwoFingerYRef.current = getScrollGestureY(event);
             return;
           }
 
@@ -72,7 +80,9 @@ export function DraftSheet({
         },
         onPanResponderMove: (event, gestureState) => {
           if (gestureState.numberActiveTouches >= 2) {
-            handleTwoFingerScroll(event, gestureState);
+            currentStrokeRef.current = null;
+            setCurrentStroke(null);
+            gestureModeRef.current = "scroll";
             return;
           }
 
@@ -108,26 +118,56 @@ export function DraftSheet({
           commitCurrentStroke();
         }
       }),
-    [onTwoFingerScroll, strokes]
+    [strokes]
   );
 
-  function handleTwoFingerScroll(
-    event: GestureResponderEvent,
-    gestureState: PanResponderGestureState
-  ) {
+  function handleRawTouchMove(event: GestureResponderEvent) {
+    const touches = event.nativeEvent.touches;
+
+    if (touches.length < 2) {
+      lastTouchMoveYRef.current = null;
+      return;
+    }
+
     currentStrokeRef.current = null;
     setCurrentStroke(null);
     gestureModeRef.current = "scroll";
 
-    const centerY = getScrollGestureY(event, gestureState);
-    const lastCenterY = lastTwoFingerYRef.current;
-    lastTwoFingerYRef.current = centerY;
+    const centerY = getTouchCenterY(touches);
+    const lastCenterY = lastTouchMoveYRef.current;
+    lastTouchMoveYRef.current = centerY;
 
     if (lastCenterY === null) {
       return;
     }
 
-    onTwoFingerScroll?.(lastCenterY - centerY);
+    const deltaY = lastCenterY - centerY;
+
+    if (Math.abs(deltaY) < MIN_SCROLL_DELTA) {
+      return;
+    }
+
+    scheduleTwoFingerScroll(deltaY);
+  }
+
+  function scheduleTwoFingerScroll(deltaY: number) {
+    pendingScrollDeltaRef.current += deltaY;
+
+    if (scrollFrameRef.current !== null) {
+      return;
+    }
+
+    scrollFrameRef.current = requestAnimationFrame(() => {
+      const nextDeltaY = pendingScrollDeltaRef.current;
+      pendingScrollDeltaRef.current = 0;
+      scrollFrameRef.current = null;
+
+      if (Math.abs(nextDeltaY) < MIN_SCROLL_DELTA) {
+        return;
+      }
+
+      onTwoFingerScroll?.(nextDeltaY);
+    });
   }
 
   function commitCurrentStroke() {
@@ -139,7 +179,8 @@ export function DraftSheet({
 
     currentStrokeRef.current = null;
     gestureModeRef.current = null;
-    lastTwoFingerYRef.current = null;
+    lastTouchMoveYRef.current = null;
+    pendingScrollDeltaRef.current = 0;
     setCurrentStroke(null);
   }
 
@@ -157,6 +198,7 @@ export function DraftSheet({
         <View
           className="absolute bottom-0 left-0 right-0"
           style={{ top: TOOLBAR_HEIGHT }}
+          onTouchMove={handleRawTouchMove}
           {...panResponder.panHandlers}
         >
           <Svg height="100%" width="100%">
@@ -246,17 +288,6 @@ function readPoint(event: GestureResponderEvent): DraftPoint {
     x: event.nativeEvent.locationX,
     y: event.nativeEvent.locationY
   };
-}
-
-function getScrollGestureY(
-  event: GestureResponderEvent,
-  gestureState?: PanResponderGestureState
-) {
-  if (event.nativeEvent.touches.length >= 2) {
-    return getTouchCenterY(event.nativeEvent.touches);
-  }
-
-  return gestureState?.moveY ?? event.nativeEvent.pageY;
 }
 
 function getTouchCenterY(touches: TouchPoint[]) {
