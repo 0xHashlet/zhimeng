@@ -42,6 +42,9 @@ type GeneratedQuestionsPayload = {
 };
 
 const apiKeyStoreKey = "zhimeng.openai_api_key";
+const modelStoreKey = "zhimeng.openai_model";
+const defaultModel = "gpt-5.2";
+const modelOptions = ["gpt-5.2", "gpt-4.1-mini", "gpt-4.1"] as const;
 
 const sampleQuestions: BaseWeightQuestion[] = [
   {
@@ -64,6 +67,8 @@ const sampleQuestions: BaseWeightQuestion[] = [
 export function DashboardScreen() {
   const [apiKey, setApiKey] = useState("");
   const [draftApiKey, setDraftApiKey] = useState("");
+  const [model, setModel] = useState(defaultModel);
+  const [draftModel, setDraftModel] = useState(defaultModel);
   const [settingsVisible, setSettingsVisible] = useState(false);
   const [questions, setQuestions] = useState<BaseWeightQuestion[]>(sampleQuestions);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -85,36 +90,50 @@ export function DashboardScreen() {
   const averageSeconds = Math.round(elapsedSeconds / Math.max(1, answeredCount));
 
   useEffect(() => {
-    async function loadApiKey() {
+    async function loadSettings() {
       const storedApiKey = await SecureStore.getItemAsync(apiKeyStoreKey);
+      const storedModel = await SecureStore.getItemAsync(modelStoreKey);
 
       if (storedApiKey) {
         setApiKey(storedApiKey);
         setDraftApiKey(storedApiKey);
       }
+
+      if (storedModel) {
+        setModel(storedModel);
+        setDraftModel(storedModel);
+      }
     }
 
-    void loadApiKey();
+    void loadSettings();
   }, []);
 
-  async function saveApiKey() {
+  async function saveSettings() {
     const nextApiKey = draftApiKey.trim();
+    const nextModel = draftModel.trim() || defaultModel;
 
     if (!nextApiKey) {
       await SecureStore.deleteItemAsync(apiKeyStoreKey);
       setApiKey("");
+      await SecureStore.setItemAsync(modelStoreKey, nextModel);
+      setModel(nextModel);
+      setDraftModel(nextModel);
       setSettingsVisible(false);
       return;
     }
 
     await SecureStore.setItemAsync(apiKeyStoreKey, nextApiKey);
+    await SecureStore.setItemAsync(modelStoreKey, nextModel);
     setApiKey(nextApiKey);
+    setModel(nextModel);
+    setDraftModel(nextModel);
     setSettingsVisible(false);
   }
 
   async function generateQuestions() {
     if (!apiKey) {
       setDraftApiKey("");
+      setDraftModel(model);
       setSettingsVisible(true);
       return;
     }
@@ -123,7 +142,7 @@ export function DashboardScreen() {
     setErrorMessage("");
 
     try {
-      const generatedQuestions = await requestGeneratedQuestions(apiKey);
+      const generatedQuestions = await requestGeneratedQuestions(apiKey, model);
       setQuestions(generatedQuestions);
       resetTraining(generatedQuestions);
     } catch (error) {
@@ -180,6 +199,7 @@ export function DashboardScreen() {
             className="h-11 w-11 items-center justify-center rounded-full bg-glacier-soft"
             onPress={() => {
               setDraftApiKey(apiKey);
+              setDraftModel(model);
               setSettingsVisible(true);
             }}
           >
@@ -372,6 +392,47 @@ export function DashboardScreen() {
               className="mt-4 h-12 rounded-2xl border border-glacier-border bg-glacier-background px-4 text-base text-glacier-textPrimary"
               onChangeText={setDraftApiKey}
             />
+            <Text className="mt-5 text-sm font-bold text-glacier-textPrimary">
+              生成模型
+            </Text>
+            <View className="mt-3 flex-row flex-wrap gap-2">
+              {modelOptions.map((modelOption) => {
+                const selected = draftModel.trim() === modelOption;
+
+                return (
+                  <Pressable
+                    key={modelOption}
+                    accessibilityRole="button"
+                    accessibilityLabel={`选择模型 ${modelOption}`}
+                    className={[
+                      "rounded-full border px-3 py-2",
+                      selected
+                        ? "border-glacier-primary bg-glacier-soft"
+                        : "border-glacier-border bg-glacier-card"
+                    ].join(" ")}
+                    onPress={() => setDraftModel(modelOption)}
+                  >
+                    <Text
+                      className={[
+                        "text-sm font-bold",
+                        selected ? "text-glacier-primary" : "text-glacier-textSecondary"
+                      ].join(" ")}
+                    >
+                      {modelOption}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+            <TextInput
+              autoCapitalize="none"
+              autoCorrect={false}
+              placeholder="也可以填写自定义模型名"
+              placeholderTextColor={colors.textMuted}
+              value={draftModel}
+              className="mt-3 h-12 rounded-2xl border border-glacier-border bg-glacier-background px-4 text-base text-glacier-textPrimary"
+              onChangeText={setDraftModel}
+            />
             <View className="mt-4 flex-row gap-3">
               <Pressable
                 accessibilityRole="button"
@@ -385,9 +446,9 @@ export function DashboardScreen() {
               </Pressable>
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel="保存 API Key"
+                accessibilityLabel="保存大模型设置"
                 className="h-12 flex-1 items-center justify-center rounded-2xl bg-glacier-primary"
-                onPress={saveApiKey}
+                onPress={saveSettings}
               >
                 <Text className="text-base font-extrabold text-white">保存</Text>
               </Pressable>
@@ -399,7 +460,7 @@ export function DashboardScreen() {
   );
 }
 
-async function requestGeneratedQuestions(apiKey: string) {
+async function requestGeneratedQuestions(apiKey: string, model: string) {
   const response = await fetch("https://api.openai.com/v1/responses", {
     method: "POST",
     headers: {
@@ -407,7 +468,7 @@ async function requestGeneratedQuestions(apiKey: string) {
       "Content-Type": "application/json"
     },
     body: JSON.stringify({
-      model: "gpt-5.2",
+      model,
       input: [
         {
           role: "system",
