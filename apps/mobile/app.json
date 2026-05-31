@@ -14,6 +14,7 @@
         "backgroundColor": "#ffffff"
       },
       "package": "com.hastlet.zhimengmobile"
-    }
+    },
+    "plugins": ["expo-secure-store"]
   }
 }

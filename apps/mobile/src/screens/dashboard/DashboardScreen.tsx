@@ -1,7 +1,23 @@
-import { useMemo, useState } from "react";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { useEffect, useMemo, useState } from "react";
+import {
+  ActivityIndicator,
+  Modal,
+  Pressable,
+  ScrollView,
+  Text,
+  TextInput,
+  View
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { CheckCircle2, RotateCcw, Timer, Zap } from "lucide-react-native";
+import * as SecureStore from "expo-secure-store";
+import {
+  CheckCircle2,
+  KeyRound,
+  RotateCcw,
+  Settings,
+  Timer,
+  Zap
+} from "lucide-react-native";
 import { colors } from "../../theme/colors";
 
 type OptionKey = "A" | "B" | "C" | "D";
@@ -21,7 +37,13 @@ type BaseWeightQuestion = {
   tag: string;
 };
 
-const questions: BaseWeightQuestion[] = [
+type GeneratedQuestionsPayload = {
+  questions: BaseWeightQuestion[];
+};
+
+const apiKeyStoreKey = "zhimeng.openai_api_key";
+
+const sampleQuestions: BaseWeightQuestion[] = [
   {
     id: 1,
     tag: "工业增加值",
@@ -35,149 +57,20 @@ const questions: BaseWeightQuestion[] = [
       { key: "D", value: "28.1%" }
     ],
     answer: "A",
-    explanation: "基期比重约为 760/2860 × (1+8.6%)/(1+12.1%)，约 25.7%。"
-  },
-  {
-    id: 2,
-    tag: "消费市场",
-    material:
-      "2023 年，某省社会消费品零售总额为 18,420 亿元，同比增长 6.9%。其中，网上零售额为 4,260 亿元，同比增长 11.8%。",
-    question: "2022 年该省网上零售额占社会消费品零售总额的比重约为多少？",
-    options: [
-      { key: "A", value: "21.5%" },
-      { key: "B", value: "22.1%" },
-      { key: "C", value: "23.1%" },
-      { key: "D", value: "24.2%" }
-    ],
-    answer: "B",
-    explanation: "基期比重约为 4260/18420 × 1.069/1.118，约 22.1%。"
-  },
-  {
-    id: 3,
-    tag: "财政收入",
-    material:
-      "2023 年，某地区一般公共预算收入为 1,240 亿元，同比增长 6.7%。其中，税收收入为 910 亿元，同比增长 8.9%。",
-    question: "2022 年该地区税收收入占一般公共预算收入的比重约为多少？",
-    options: [
-      { key: "A", value: "71.7%" },
-      { key: "B", value: "72.4%" },
-      { key: "C", value: "73.4%" },
-      { key: "D", value: "74.9%" }
-    ],
-    answer: "A",
-    explanation: "基期比重约为 910/1240 × 1.067/1.089，约 71.7%。"
-  },
-  {
-    id: 4,
-    tag: "进出口",
-    material:
-      "2023 年，某市进出口总额为 9,680 亿元，同比增长 4.5%。其中，出口额为 5,720 亿元，同比增长 7.2%。",
-    question: "2022 年该市出口额占进出口总额的比重约为多少？",
-    options: [
-      { key: "A", value: "56.8%" },
-      { key: "B", value: "57.7%" },
-      { key: "C", value: "59.1%" },
-      { key: "D", value: "60.6%" }
-    ],
-    answer: "B",
-    explanation: "基期比重约为 5720/9680 × 1.045/1.072，约 57.7%。"
-  },
-  {
-    id: 5,
-    tag: "交通运输",
-    material:
-      "2023 年，某省货物周转量为 4,850 亿吨公里，同比增长 5.4%。其中，铁路货物周转量为 1,360 亿吨公里，同比增长 9.6%。",
-    question: "2022 年该省铁路货物周转量占货物周转量的比重约为多少？",
-    options: [
-      { key: "A", value: "26.9%" },
-      { key: "B", value: "27.4%" },
-      { key: "C", value: "28.0%" },
-      { key: "D", value: "29.1%" }
-    ],
-    answer: "A",
-    explanation: "基期比重约为 1360/4850 × 1.054/1.096，约 26.9%。"
-  },
-  {
-    id: 6,
-    tag: "服务业",
-    material:
-      "2023 年，某地服务业增加值为 7,520 亿元，同比增长 7.8%。其中，信息传输、软件和信息技术服务业增加值为 1,180 亿元，同比增长 14.5%。",
-    question: "2022 年该行业增加值占服务业增加值的比重约为多少？",
-    options: [
-      { key: "A", value: "14.1%" },
-      { key: "B", value: "14.8%" },
-      { key: "C", value: "15.7%" },
-      { key: "D", value: "16.6%" }
-    ],
-    answer: "B",
-    explanation: "基期比重约为 1180/7520 × 1.078/1.145，约 14.8%。"
-  },
-  {
-    id: 7,
-    tag: "固定资产投资",
-    material:
-      "2023 年，某市固定资产投资额为 6,340 亿元，同比增长 3.8%。其中，民间投资额为 3,120 亿元，同比下降 1.6%。",
-    question: "2022 年该市民间投资额占固定资产投资额的比重约为多少？",
-    options: [
-      { key: "A", value: "48.5%" },
-      { key: "B", value: "49.2%" },
-      { key: "C", value: "50.3%" },
-      { key: "D", value: "51.9%" }
-    ],
-    answer: "D",
-    explanation: "基期比重约为 3120/6340 × 1.038/(1-1.6%)，约 51.9%。"
-  },
-  {
-    id: 8,
-    tag: "农业",
-    material:
-      "2023 年，某县农林牧渔业总产值为 865 亿元，同比增长 5.2%。其中，畜牧业产值为 286 亿元，同比增长 2.4%。",
-    question: "2022 年该县畜牧业产值占农林牧渔业总产值的比重约为多少？",
-    options: [
-      { key: "A", value: "32.1%" },
-      { key: "B", value: "33.1%" },
-      { key: "C", value: "34.0%" },
-      { key: "D", value: "35.2%" }
-    ],
-    answer: "C",
-    explanation: "基期比重约为 286/865 × 1.052/1.024，约 34.0%。"
-  },
-  {
-    id: 9,
-    tag: "旅游收入",
-    material:
-      "2023 年，某省旅游总收入为 5,680 亿元，同比增长 18.4%。其中，入境旅游收入为 420 亿元，同比增长 26.5%。",
-    question: "2022 年该省入境旅游收入占旅游总收入的比重约为多少？",
-    options: [
-      { key: "A", value: "6.9%" },
-      { key: "B", value: "7.4%" },
-      { key: "C", value: "7.9%" },
-      { key: "D", value: "8.3%" }
-    ],
-    answer: "A",
-    explanation: "基期比重约为 420/5680 × 1.184/1.265，约 6.9%。"
-  },
-  {
-    id: 10,
-    tag: "研发投入",
-    material:
-      "2023 年，某市研究与试验发展经费支出为 960 亿元，同比增长 12.6%。其中，企业研发经费支出为 742 亿元，同比增长 15.9%。",
-    question: "2022 年该市企业研发经费支出占研发经费支出的比重约为多少？",
-    options: [
-      { key: "A", value: "72.6%" },
-      { key: "B", value: "74.0%" },
-      { key: "C", value: "75.6%" },
-      { key: "D", value: "77.3%" }
-    ],
-    answer: "C",
-    explanation: "基期比重约为 742/960 × 1.126/1.159，约 75.6%。"
+    explanation: "基期比重 = 760/2860 × (1+8.6%)/(1+12.1%)，约为 25.7%。"
   }
 ];
 
 export function DashboardScreen() {
+  const [apiKey, setApiKey] = useState("");
+  const [draftApiKey, setDraftApiKey] = useState("");
+  const [settingsVisible, setSettingsVisible] = useState(false);
+  const [questions, setQuestions] = useState<BaseWeightQuestion[]>(sampleQuestions);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedAnswers, setSelectedAnswers] = useState<Record<number, OptionKey>>({});
   const [startedAt, setStartedAt] = useState(Date.now());
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
   const currentQuestion = questions[currentIndex];
   const selectedAnswer = selectedAnswers[currentQuestion.id];
   const answeredCount = Object.keys(selectedAnswers).length;
@@ -185,11 +78,64 @@ export function DashboardScreen() {
     () =>
       questions.filter((question) => selectedAnswers[question.id] === question.answer)
         .length,
-    [selectedAnswers]
+    [questions, selectedAnswers]
   );
   const isCompleted = answeredCount === questions.length;
   const elapsedSeconds = Math.max(1, Math.round((Date.now() - startedAt) / 1000));
   const averageSeconds = Math.round(elapsedSeconds / Math.max(1, answeredCount));
+
+  useEffect(() => {
+    async function loadApiKey() {
+      const storedApiKey = await SecureStore.getItemAsync(apiKeyStoreKey);
+
+      if (storedApiKey) {
+        setApiKey(storedApiKey);
+        setDraftApiKey(storedApiKey);
+      }
+    }
+
+    void loadApiKey();
+  }, []);
+
+  async function saveApiKey() {
+    const nextApiKey = draftApiKey.trim();
+
+    if (!nextApiKey) {
+      await SecureStore.deleteItemAsync(apiKeyStoreKey);
+      setApiKey("");
+      setSettingsVisible(false);
+      return;
+    }
+
+    await SecureStore.setItemAsync(apiKeyStoreKey, nextApiKey);
+    setApiKey(nextApiKey);
+    setSettingsVisible(false);
+  }
+
+  async function generateQuestions() {
+    if (!apiKey) {
+      setDraftApiKey("");
+      setSettingsVisible(true);
+      return;
+    }
+
+    setIsGenerating(true);
+    setErrorMessage("");
+
+    try {
+      const generatedQuestions = await requestGeneratedQuestions(apiKey);
+      setQuestions(generatedQuestions);
+      resetTraining(generatedQuestions);
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "题目生成失败，请检查 API Key 和网络后重试。"
+      );
+    } finally {
+      setIsGenerating(false);
+    }
+  }
 
   function selectAnswer(answer: OptionKey) {
     if (selectedAnswer) {
@@ -206,10 +152,11 @@ export function DashboardScreen() {
     setCurrentIndex((index) => Math.min(questions.length - 1, index + 1));
   }
 
-  function restart() {
+  function resetTraining(nextQuestions = questions) {
     setCurrentIndex(0);
     setSelectedAnswers({});
     setStartedAt(Date.now());
+    setQuestions(nextQuestions);
   }
 
   return (
@@ -224,19 +171,65 @@ export function DashboardScreen() {
               基期比重提速训练
             </Text>
             <Text className="mt-2 text-sm leading-[22px] text-glacier-textSecondary">
-              一次 10 题，专练“现期比重 × 增速修正”的资料分析高频题型。
+              填入 API Key 后直接由大模型生成 10 道模拟真题，不经过后台。
             </Text>
           </View>
-          <View className="h-11 w-11 items-center justify-center rounded-full bg-glacier-soft">
-            <Zap color={colors.primary} size={22} />
-          </View>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="打开设置"
+            className="h-11 w-11 items-center justify-center rounded-full bg-glacier-soft"
+            onPress={() => {
+              setDraftApiKey(apiKey);
+              setSettingsVisible(true);
+            }}
+          >
+            <Settings color={colors.primary} size={22} />
+          </Pressable>
         </View>
 
         <View className="mt-5 flex-row gap-2.5">
-          <MetricCard label="进度" value={`${answeredCount}/10`} />
+          <MetricCard label="进度" value={`${answeredCount}/${questions.length}`} />
           <MetricCard label="正确" value={`${correctCount}`} />
           <MetricCard label="均时" value={`${averageSeconds}s`} />
         </View>
+
+        <View className="mt-5 flex-row gap-3">
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="生成新题"
+            disabled={isGenerating}
+            className={[
+              "h-12 flex-1 flex-row items-center justify-center gap-2 rounded-2xl",
+              isGenerating ? "bg-glacier-border" : "bg-glacier-primary"
+            ].join(" ")}
+            onPress={generateQuestions}
+          >
+            {isGenerating ? (
+              <ActivityIndicator color={colors.card} />
+            ) : (
+              <Zap color={colors.card} size={18} />
+            )}
+            <Text className="text-base font-extrabold text-white">
+              {isGenerating ? "正在生成" : "生成 10 题"}
+            </Text>
+          </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="重练本组"
+            className="h-12 w-12 items-center justify-center rounded-2xl border border-glacier-border bg-glacier-card"
+            onPress={() => resetTraining()}
+          >
+            <RotateCcw color={colors.textSecondary} size={20} />
+          </Pressable>
+        </View>
+
+        {errorMessage ? (
+          <View className="mt-4 rounded-2xl border border-glacier-error bg-glacier-card p-3">
+            <Text className="text-sm leading-[22px] text-glacier-error">
+              {errorMessage}
+            </Text>
+          </View>
+        ) : null}
 
         <View className="mt-5 overflow-hidden rounded-[26px] bg-glacier-card shadow-sm">
           <View className="border-b border-glacier-border px-4 py-4">
@@ -320,30 +313,20 @@ export function DashboardScreen() {
           </View>
         </View>
 
-        <View className="mt-5 flex-row gap-3">
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="重练本组"
-            className="h-12 w-12 items-center justify-center rounded-2xl border border-glacier-border bg-glacier-card"
-            onPress={restart}
-          >
-            <RotateCcw color={colors.textSecondary} size={20} />
-          </Pressable>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={isCompleted ? "查看本组结果" : "下一题"}
-            disabled={!selectedAnswer}
-            className={[
-              "h-12 flex-1 items-center justify-center rounded-2xl",
-              selectedAnswer ? "bg-glacier-primary" : "bg-glacier-border"
-            ].join(" ")}
-            onPress={goNext}
-          >
-            <Text className="text-base font-extrabold text-white">
-              {isCompleted ? "本组完成" : "下一题"}
-            </Text>
-          </Pressable>
-        </View>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={isCompleted ? "本组完成" : "下一题"}
+          disabled={!selectedAnswer || isCompleted}
+          className={[
+            "mt-5 h-12 items-center justify-center rounded-2xl",
+            selectedAnswer && !isCompleted ? "bg-glacier-primary" : "bg-glacier-border"
+          ].join(" ")}
+          onPress={goNext}
+        >
+          <Text className="text-base font-extrabold text-white">
+            {isCompleted ? "本组完成" : "下一题"}
+          </Text>
+        </Pressable>
 
         {isCompleted ? (
           <View className="mt-5 rounded-[24px] bg-glacier-card p-4 shadow-sm">
@@ -354,14 +337,195 @@ export function DashboardScreen() {
               </Text>
             </View>
             <Text className="mt-3 text-sm leading-[23px] text-glacier-textSecondary">
-              做对 {correctCount} / 10，平均每题 {averageSeconds} 秒。目标是先稳定 80%
-              正确率，再把单题压到 45 秒内。
+              做对 {correctCount} / {questions.length}，平均每题 {averageSeconds}
+              秒。目标是先稳定 80% 正确率，再把单题压到 45 秒内。
             </Text>
           </View>
         ) : null}
       </ScrollView>
+
+      <Modal
+        animationType="slide"
+        transparent
+        visible={settingsVisible}
+        onRequestClose={() => setSettingsVisible(false)}
+      >
+        <View className="flex-1 justify-end bg-black/20">
+          <View className="rounded-t-[28px] bg-glacier-card px-5 pb-8 pt-5">
+            <View className="flex-row items-center gap-2">
+              <KeyRound color={colors.primary} size={20} />
+              <Text className="text-lg font-extrabold text-glacier-textPrimary">
+                大模型设置
+              </Text>
+            </View>
+            <Text className="mt-2 text-sm leading-[22px] text-glacier-textSecondary">
+              API Key 仅保存在本机 SecureStore。前端会直接调用 OpenAI API
+              生成题目，不经过你的后台。
+            </Text>
+            <TextInput
+              autoCapitalize="none"
+              autoCorrect={false}
+              secureTextEntry
+              placeholder="填写 OpenAI API Key"
+              placeholderTextColor={colors.textMuted}
+              value={draftApiKey}
+              className="mt-4 h-12 rounded-2xl border border-glacier-border bg-glacier-background px-4 text-base text-glacier-textPrimary"
+              onChangeText={setDraftApiKey}
+            />
+            <View className="mt-4 flex-row gap-3">
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="取消设置"
+                className="h-12 flex-1 items-center justify-center rounded-2xl border border-glacier-border bg-glacier-card"
+                onPress={() => setSettingsVisible(false)}
+              >
+                <Text className="text-base font-bold text-glacier-textSecondary">
+                  取消
+                </Text>
+              </Pressable>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="保存 API Key"
+                className="h-12 flex-1 items-center justify-center rounded-2xl bg-glacier-primary"
+                onPress={saveApiKey}
+              >
+                <Text className="text-base font-extrabold text-white">保存</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
+}
+
+async function requestGeneratedQuestions(apiKey: string) {
+  const response = await fetch("https://api.openai.com/v1/responses", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      model: "gpt-5.2",
+      input: [
+        {
+          role: "system",
+          content:
+            "你是公务员考试资料分析命题专家。只生成严谨的基期比重题，数据要自洽，答案唯一。"
+        },
+        {
+          role: "user",
+          content:
+            "生成 10 道资料分析基期比重提速训练题。每题包含 tag、material、question、options、answer、explanation。题干要像真题材料，有现期总量、现期部分量、总量同比增速、部分同比增速。选项为百分数，四个选项接近但答案唯一。explanation 要给出基期比重公式：部分/总体 × (1+总体增速)/(1+部分增速)。"
+        }
+      ],
+      text: {
+        format: {
+          type: "json_schema",
+          name: "base_weight_training_questions",
+          strict: true,
+          schema: {
+            type: "object",
+            additionalProperties: false,
+            required: ["questions"],
+            properties: {
+              questions: {
+                type: "array",
+                minItems: 10,
+                maxItems: 10,
+                items: {
+                  type: "object",
+                  additionalProperties: false,
+                  required: [
+                    "id",
+                    "tag",
+                    "material",
+                    "question",
+                    "options",
+                    "answer",
+                    "explanation"
+                  ],
+                  properties: {
+                    id: { type: "number" },
+                    tag: { type: "string" },
+                    material: { type: "string" },
+                    question: { type: "string" },
+                    options: {
+                      type: "array",
+                      minItems: 4,
+                      maxItems: 4,
+                      items: {
+                        type: "object",
+                        additionalProperties: false,
+                        required: ["key", "value"],
+                        properties: {
+                          key: { type: "string", enum: ["A", "B", "C", "D"] },
+                          value: { type: "string" }
+                        }
+                      }
+                    },
+                    answer: { type: "string", enum: ["A", "B", "C", "D"] },
+                    explanation: { type: "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    })
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`题目生成失败：${response.status} ${errorText.slice(0, 120)}`);
+  }
+
+  const data = await response.json();
+  const outputText = extractResponseText(data);
+  const parsed = JSON.parse(outputText) as GeneratedQuestionsPayload;
+
+  return normalizeQuestions(parsed.questions);
+}
+
+function extractResponseText(data: unknown) {
+  if (
+    data &&
+    typeof data === "object" &&
+    "output_text" in data &&
+    typeof data.output_text === "string"
+  ) {
+    return data.output_text;
+  }
+
+  const output = (data as { output?: Array<{ content?: Array<{ text?: string }> }> })
+    .output;
+  const text = output
+    ?.flatMap((item) => item.content ?? [])
+    .map((content) => content.text)
+    .find((value): value is string => Boolean(value));
+
+  if (!text) {
+    throw new Error("大模型返回格式异常，未找到题目 JSON。");
+  }
+
+  return text;
+}
+
+function normalizeQuestions(questions: BaseWeightQuestion[]) {
+  if (!Array.isArray(questions) || questions.length !== 10) {
+    throw new Error("大模型没有返回 10 道题，请重试。");
+  }
+
+  return questions.map((question, index) => ({
+    ...question,
+    id: index + 1,
+    options: question.options.map((option, optionIndex) => ({
+      key: ["A", "B", "C", "D"][optionIndex] as OptionKey,
+      value: option.value
+    }))
+  }));
 }
 
 function MetricCard({ label, value }: { label: string; value: string }) {
