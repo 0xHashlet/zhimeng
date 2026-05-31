@@ -4,6 +4,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import {
   ArrowLeft,
   CheckCircle2,
+  X,
   PenLine,
   RotateCcw,
   Timer,
@@ -86,11 +87,25 @@ export function QuestionTrainingScreen({
           <View className="flex-row items-center justify-between">
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel="返回首页"
-              className="h-11 w-11 items-center justify-center rounded-full"
-              onPress={onBack}
+              accessibilityLabel={draftActive ? "关闭草稿" : "返回首页"}
+              className={[
+                "h-11 w-11 items-center justify-center rounded-full",
+                draftActive ? "bg-glacier-soft" : ""
+              ].join(" ")}
+              onPress={() => {
+                if (draftActive) {
+                  setDraftActive(false);
+                  return;
+                }
+
+                onBack();
+              }}
             >
-              <ArrowLeft color={colors.textPrimary} size={25} />
+              {draftActive ? (
+                <X color={colors.textSecondary} size={24} />
+              ) : (
+                <ArrowLeft color={colors.textPrimary} size={25} />
+              )}
             </Pressable>
             <Text className="text-xl font-extrabold text-glacier-textPrimary">
               {currentIndex + 1} / {questions.length}
