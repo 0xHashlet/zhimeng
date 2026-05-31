@@ -41,10 +41,15 @@ type GeneratedQuestionsPayload = {
   questions: BaseWeightQuestion[];
 };
 
-const apiKeyStoreKey = "zhimeng.openai_api_key";
-const modelStoreKey = "zhimeng.openai_model";
-const defaultModel = "gpt-5.2";
-const modelOptions = ["gpt-5.2", "gpt-4.1-mini", "gpt-4.1"] as const;
+const apiKeyStoreKey = "zhimeng.deepseek_api_key";
+const modelStoreKey = "zhimeng.deepseek_model";
+const defaultModel = "deepseek-v4-flash";
+const modelOptions = [
+  "deepseek-v4-flash",
+  "deepseek-v4-pro",
+  "deepseek-chat",
+  "deepseek-reasoner"
+] as const;
 
 const sampleQuestions: BaseWeightQuestion[] = [
   {
@@ -379,14 +384,14 @@ export function DashboardScreen() {
               </Text>
             </View>
             <Text className="mt-2 text-sm leading-[22px] text-glacier-textSecondary">
-              API Key 仅保存在本机 SecureStore。前端会直接调用 OpenAI API
+              API Key 仅保存在本机 SecureStore。前端会直接调用 DeepSeek API
               生成题目，不经过你的后台。
             </Text>
             <TextInput
               autoCapitalize="none"
               autoCorrect={false}
               secureTextEntry
-              placeholder="填写 OpenAI API Key"
+              placeholder="填写 DeepSeek API Key"
               placeholderTextColor={colors.textMuted}
               value={draftApiKey}
               className="mt-4 h-12 rounded-2xl border border-glacier-border bg-glacier-background px-4 text-base text-glacier-textPrimary"
@@ -461,7 +466,7 @@ export function DashboardScreen() {
 }
 
 async function requestGeneratedQuestions(apiKey: string, model: string) {
-  const response = await fetch("https://api.openai.com/v1/responses", {
+  const response = await fetch("https://api.deepseek.com/chat/completions", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${apiKey}`,
@@ -469,72 +474,21 @@ async function requestGeneratedQuestions(apiKey: string, model: string) {
     },
     body: JSON.stringify({
       model,
-      input: [
+      messages: [
         {
           role: "system",
           content:
-            "你是公务员考试资料分析命题专家。只生成严谨的基期比重题，数据要自洽，答案唯一。"
+            '你是公务员考试资料分析命题专家。只生成严谨的基期比重题，数据要自洽，答案唯一。必须只输出合法 json，不要输出 markdown。JSON 格式示例：{"questions":[{"id":1,"tag":"工业增加值","material":"材料","question":"问题","options":[{"key":"A","value":"25.7%"},{"key":"B","value":"26.6%"},{"key":"C","value":"27.4%"},{"key":"D","value":"28.1%"}],"answer":"A","explanation":"解析"}]}'
         },
         {
           role: "user",
           content:
-            "生成 10 道资料分析基期比重提速训练题。每题包含 tag、material、question、options、answer、explanation。题干要像真题材料，有现期总量、现期部分量、总量同比增速、部分同比增速。选项为百分数，四个选项接近但答案唯一。explanation 要给出基期比重公式：部分/总体 × (1+总体增速)/(1+部分增速)。"
+            "生成 10 道资料分析基期比重提速训练题，并以 json 返回。每题包含 tag、material、question、options、answer、explanation。题干要像真题材料，有现期总量、现期部分量、总量同比增速、部分同比增速。选项为百分数，四个选项接近但答案唯一。explanation 要给出基期比重公式：部分/总体 × (1+总体增速)/(1+部分增速)。"
         }
       ],
-      text: {
-        format: {
-          type: "json_schema",
-          name: "base_weight_training_questions",
-          strict: true,
-          schema: {
-            type: "object",
-            additionalProperties: false,
-            required: ["questions"],
-            properties: {
-              questions: {
-                type: "array",
-                minItems: 10,
-                maxItems: 10,
-                items: {
-                  type: "object",
-                  additionalProperties: false,
-                  required: [
-                    "id",
-                    "tag",
-                    "material",
-                    "question",
-                    "options",
-                    "answer",
-                    "explanation"
-                  ],
-                  properties: {
-                    id: { type: "number" },
-                    tag: { type: "string" },
-                    material: { type: "string" },
-                    question: { type: "string" },
-                    options: {
-                      type: "array",
-                      minItems: 4,
-                      maxItems: 4,
-                      items: {
-                        type: "object",
-                        additionalProperties: false,
-                        required: ["key", "value"],
-                        properties: {
-                          key: { type: "string", enum: ["A", "B", "C", "D"] },
-                          value: { type: "string" }
-                        }
-                      }
-                    },
-                    answer: { type: "string", enum: ["A", "B", "C", "D"] },
-                    explanation: { type: "string" }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
+      response_format: { type: "json_object" },
+      stream: false,
+      max_tokens: 8192
     })
   });
 
@@ -551,21 +505,11 @@ async function requestGeneratedQuestions(apiKey: string, model: string) {
 }
 
 function extractResponseText(data: unknown) {
-  if (
-    data &&
-    typeof data === "object" &&
-    "output_text" in data &&
-    typeof data.output_text === "string"
-  ) {
-    return data.output_text;
-  }
-
-  const output = (data as { output?: Array<{ content?: Array<{ text?: string }> }> })
-    .output;
-  const text = output
-    ?.flatMap((item) => item.content ?? [])
-    .map((content) => content.text)
-    .find((value): value is string => Boolean(value));
+  const text = (
+    data as {
+      choices?: Array<{ message?: { content?: string } }>;
+    }
+  ).choices?.[0]?.message?.content;
 
   if (!text) {
     throw new Error("大模型返回格式异常，未找到题目 JSON。");
