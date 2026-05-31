@@ -15,6 +15,15 @@
       },
       "package": "com.hastlet.zhimengmobile"
     },
+    "androidStatusBar": {
+      "backgroundColor": "#FFFFFF",
+      "barStyle": "dark-content",
+      "translucent": false
+    },
+    "androidNavigationBar": {
+      "backgroundColor": "#FFFFFF",
+      "barStyle": "dark-content"
+    },
     "plugins": ["expo-secure-store"]
   }
 }

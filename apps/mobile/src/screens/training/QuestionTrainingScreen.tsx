@@ -78,8 +78,8 @@ export function QuestionTrainingScreen({
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-glacier-background">
-      <View className="relative flex-1">
+    <SafeAreaView className="flex-1 bg-glacier-card">
+      <View className="relative flex-1 bg-glacier-background">
         <View
           className="border-b border-glacier-border bg-glacier-card px-5 pb-3 pt-2"
           style={{ elevation: 30, zIndex: 30 }}
