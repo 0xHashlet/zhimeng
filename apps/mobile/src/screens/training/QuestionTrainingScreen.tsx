@@ -11,7 +11,7 @@ import {
   Trash2,
   Undo2
 } from "lucide-react-native";
-import { DraftLayer } from "../../components/DraftLayer";
+import { DraftLayer, type DraftPoint } from "../../components/DraftLayer";
 import { colors } from "../../theme/colors";
 import type {
   BaseWeightQuestion,
@@ -40,6 +40,7 @@ export function QuestionTrainingScreen({
   const [selectedAnswers, setSelectedAnswers] = useState<Record<number, OptionKey>>({});
   const [startedAt, setStartedAt] = useState(Date.now());
   const [draftActive, setDraftActive] = useState(false);
+  const [draftStrokes, setDraftStrokes] = useState<DraftPoint[][]>([]);
   const [clearSignal, setClearSignal] = useState(0);
   const [undoSignal, setUndoSignal] = useState(0);
   const currentQuestion = questions[currentIndex];
@@ -74,6 +75,7 @@ export function QuestionTrainingScreen({
     setCurrentIndex(0);
     setSelectedAnswers({});
     setStartedAt(Date.now());
+    setDraftStrokes([]);
     setClearSignal((value) => value + 1);
   }
 
@@ -82,7 +84,7 @@ export function QuestionTrainingScreen({
       <View className="relative flex-1 bg-glacier-background">
         <View
           className="border-b border-glacier-border bg-glacier-card px-5 pb-3 pt-2"
-          style={{ elevation: 30, zIndex: 30 }}
+          style={{ zIndex: 30 }}
         >
           <View className="flex-row items-center justify-between">
             <Pressable
@@ -288,13 +290,17 @@ export function QuestionTrainingScreen({
           ) : null}
         </ScrollView>
 
-        <DraftLayer
-          active={draftActive}
-          clearSignal={clearSignal}
-          onClearHandled={() => undefined}
-          undoSignal={undoSignal}
-          onUndoHandled={() => undefined}
-        />
+        {draftActive ? (
+          <DraftLayer
+            active={draftActive}
+            clearSignal={clearSignal}
+            onClearHandled={() => undefined}
+            undoSignal={undoSignal}
+            onUndoHandled={() => undefined}
+            strokes={draftStrokes}
+            onStrokesChange={setDraftStrokes}
+          />
+        ) : null}
       </View>
     </SafeAreaView>
   );

@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, type Dispatch, type SetStateAction } from "react";
 import { PanResponder, type GestureResponderEvent, type ViewStyle } from "react-native";
 import Svg, { Polyline } from "react-native-svg";
 
-type Point = {
+export type DraftPoint = {
   x: number;
   y: number;
 };
@@ -13,6 +13,8 @@ type DraftLayerProps = {
   onClearHandled: () => void;
   undoSignal: number;
   onUndoHandled: () => void;
+  strokes: DraftPoint[][];
+  onStrokesChange: Dispatch<SetStateAction<DraftPoint[][]>>;
 };
 
 export function DraftLayer({
@@ -20,10 +22,11 @@ export function DraftLayer({
   clearSignal,
   onClearHandled,
   undoSignal,
-  onUndoHandled
+  onUndoHandled,
+  strokes,
+  onStrokesChange
 }: DraftLayerProps) {
-  const [strokes, setStrokes] = useState<Point[][]>([]);
-  const currentStroke = useRef<Point[]>([]);
+  const currentStroke = useRef<DraftPoint[]>([]);
   const handledClearSignal = useRef(clearSignal);
   const handledUndoSignal = useRef(undoSignal);
 
@@ -33,9 +36,9 @@ export function DraftLayer({
     }
 
     handledClearSignal.current = clearSignal;
-    setStrokes([]);
+    onStrokesChange([]);
     onClearHandled();
-  }, [clearSignal, onClearHandled]);
+  }, [clearSignal, onClearHandled, onStrokesChange]);
 
   useEffect(() => {
     if (handledUndoSignal.current === undoSignal) {
@@ -43,9 +46,9 @@ export function DraftLayer({
     }
 
     handledUndoSignal.current = undoSignal;
-    setStrokes((current) => current.slice(0, -1));
+    onStrokesChange((current) => current.slice(0, -1));
     onUndoHandled();
-  }, [onUndoHandled, undoSignal]);
+  }, [onStrokesChange, onUndoHandled, undoSignal]);
 
   const panResponder = useMemo(
     () =>
@@ -54,12 +57,12 @@ export function DraftLayer({
         onMoveShouldSetPanResponder: () => active,
         onPanResponderGrant: (event) => {
           currentStroke.current = [readPoint(event)];
-          setStrokes((current) => [...current, currentStroke.current]);
+          onStrokesChange((current) => [...current, currentStroke.current]);
         },
         onPanResponderMove: (event) => {
           const nextStroke = [...currentStroke.current, readPoint(event)];
           currentStroke.current = nextStroke;
-          setStrokes((current) => [...current.slice(0, -1), nextStroke]);
+          onStrokesChange((current) => [...current.slice(0, -1), nextStroke]);
         },
         onPanResponderRelease: () => {
           currentStroke.current = [];
@@ -68,7 +71,7 @@ export function DraftLayer({
           currentStroke.current = [];
         }
       }),
-    [active]
+    [active, onStrokesChange]
   );
 
   const containerStyle: ViewStyle = {
@@ -102,7 +105,7 @@ export function DraftLayer({
   );
 }
 
-function readPoint(event: GestureResponderEvent): Point {
+function readPoint(event: GestureResponderEvent): DraftPoint {
   return {
     x: event.nativeEvent.locationX,
     y: event.nativeEvent.locationY
